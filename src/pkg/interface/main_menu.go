@@ -585,7 +585,7 @@ func handleMouseClick(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func main() {
+func ShowMainMenu() {
 	setTerminalSize(150, 38)
 	g, _ = gocui.NewGui(gocui.OutputNormal, false)
 	defer g.Close()
