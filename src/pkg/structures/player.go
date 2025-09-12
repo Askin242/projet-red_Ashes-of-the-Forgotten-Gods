@@ -4,11 +4,8 @@ type Player struct {
 	Entity
 	Weapons
 	Races
-	Helmet     Armors
-	Chestplate Armors
-	Boots      Armors
-	Mana       int
-	Money      int
+	Mana  int
+	Money int
 }
 
 func (plr *Player) TakeDamage(damage int) {
@@ -45,6 +42,21 @@ func InitCharacter(username, race string) Player {
 			Id:     123,
 			Alive:  true,
 			Level:  0,
+			Helmet: Armors{
+				Name:    "None",
+				Type:    "Helmet",
+				Defense: 0,
+			},
+			Chestplate: Armors{
+				Name:    "None",
+				Type:    "Chestplate",
+				Defense: 0,
+			},
+			Boots: Armors{
+				Name:    "None",
+				Type:    "Boots",
+				Defense: 0,
+			},
 		},
 		Weapons: Weapons{
 			Damage: 5,
@@ -57,21 +69,6 @@ func InitCharacter(username, race string) Player {
 			BonusDamage: AllRaces[race].BonusDamage,
 			BonusMana:   AllRaces[race].BonusMana,
 			Skill:       AllSpells[AllRaces[race].Skill.Name],
-		},
-		Helmet: Armors{
-			Name:    "None",
-			Type:    "Helmet",
-			Defense: 0,
-		},
-		Chestplate: Armors{
-			Name:    "None",
-			Type:    "Chestplate",
-			Defense: 0,
-		},
-		Boots: Armors{
-			Name:    "None",
-			Type:    "Boots",
-			Defense: 0,
 		},
 		Mana:  100,
 		Money: 100,
