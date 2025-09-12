@@ -2,7 +2,7 @@ package structures
 
 type Player struct {
 	Entity
-	Weapons
+	Weapon
 	Races
 	Mana  int
 	Money int
@@ -20,7 +20,7 @@ func (plr *Player) TakeDamage(damage int) {
 func (plr *Player) InflictDamage(Action string, attackedEntity Entity, spellUsed Spells) {
 	switch Action {
 	case "Melee":
-		damageOutput := plr.Races.BonusDamage + plr.Weapons.Damage
+		damageOutput := plr.Races.BonusDamage + plr.Weapon.Damage
 		attackedEntity.TakeDamage(damageOutput)
 
 	case "Spell":
@@ -32,14 +32,23 @@ func (plr *Player) InflictDamage(Action string, attackedEntity Entity, spellUsed
 	}
 }
 
+func (plr *Player) LevelUp() int {
+	plr.Level++
+	plr.MaxHP += 10
+	plr.HP += 10
+	plr.Mana += 10
+	plr.Entity.Damage += 10
+	return plr.Level
+}
+
 func InitCharacter(username, race string) Player {
 	mainPlayer := Player{
 		Entity: Entity{
 			HP:     100,
 			MaxHP:  100,
-			Damage: 10,
+			Damage: 0,
 			Name:   username,
-			Id:     123,
+			Id:     0,
 			Alive:  true,
 			Level:  0,
 			Helmet: Armors{
@@ -58,20 +67,10 @@ func InitCharacter(username, race string) Player {
 				Defense: 0,
 			},
 		},
-		Weapons: Weapons{
-			Damage: 5,
-			Name:   "Yapper",
-			Id:     12345,
-		},
-		Races: Races{
-			Name:        race,
-			BonusHP:     AllRaces[race].BonusHP,
-			BonusDamage: AllRaces[race].BonusDamage,
-			BonusMana:   AllRaces[race].BonusMana,
-			Skill:       AllSpells[AllRaces[race].Skill.Name],
-		},
-		Mana:  100,
-		Money: 100,
+		Weapon: AllWeapons["Sword"],
+		Races:  AllRaces[race],
+		Mana:   100,
+		Money:  100,
 	}
 	mainPlayer.Mana += mainPlayer.Races.BonusMana
 	mainPlayer.MaxHP += mainPlayer.Races.BonusHP
