@@ -62,7 +62,7 @@ func InitMerchant() Merchant {
 	m := Merchant{}
 	err := save.LoadAny("merchant", &m)
 	if err != nil {
-		m := Merchant{
+		m = Merchant{
 			Entity: Entity{
 				HP:    100,
 				MaxHP: 100,
