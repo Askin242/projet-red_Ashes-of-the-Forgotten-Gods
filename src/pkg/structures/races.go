@@ -1,6 +1,14 @@
 package structures
 
-type Races struct {
+type Race struct {
+	Name        string
+	BonusHP     int
+	BonusDamage int
+	Skill       Spells
+	BonusMana   int
+}
+
+type EnemyRace struct {
 	Name        string
 	BonusHP     int
 	BonusDamage int
@@ -9,31 +17,52 @@ type Races struct {
 }
 
 var (
-	Human = Races{
+	Human = Race{
 		Name:        "Human",
 		BonusHP:     0,
 		BonusMana:   0,
 		BonusDamage: 10,
 		Skill:       AllSpells["HandPunch"],
 	}
-	Elf = Races{
+	Elf = Race{
 		Name:        "Elf",
 		BonusHP:     -20,
 		BonusMana:   70,
 		BonusDamage: 10,
-		Skill:       AllSpells["Fireball"],
+		Skill:       AllSpells["HandPunch"],
 	}
-	Dwarf = Races{
+	Dwarf = Race{
 		Name:        "Dwarf",
 		BonusHP:     20,
 		BonusMana:   30,
 		BonusDamage: 10,
-		Skill:       AllSpells["Fireball"],
+		Skill:       AllSpells["HandPunch"],
+	}
+	Orc = EnemyRace{
+		Name:        "Orc",
+		BonusHP:     10,
+		BonusDamage: 15,
+	}
+	Skeleton = EnemyRace{
+		Name:        "Skeleton",
+		BonusHP:     -30,
+		BonusDamage: 20,
+	}
+	Goblin = EnemyRace{
+		Name:        "Goblin",
+		BonusHP:     10,
+		BonusDamage: 10,
 	}
 )
 
-var AllRaces = map[string]Races{
+var AllRaces = map[string]Race{
 	"Human": Human,
 	"Elf":   Elf,
 	"Dwarf": Dwarf,
+}
+
+var AllEnemyRaces = map[string]EnemyRace{
+	"Orc":      Orc,
+	"Skeleton": Skeleton,
+	"Goblin":   Goblin,
 }
