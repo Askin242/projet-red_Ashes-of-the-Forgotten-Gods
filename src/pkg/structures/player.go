@@ -15,16 +15,16 @@ type Player struct {
 	Spells         []Spell
 }
 
-func (plr *Player) InflictDamage(Action string, attackedEntity *Entity, spellUsed Spell) {
+func (plr *Player) InflictDamage(Action string, attackedEntity *Entity, spellUsed Spell, damageMultiplier float64) {
 	switch Action {
 	case "Melee":
-		damageOutput := plr.Race.BonusDamage + plr.Weapon.Damage
+		damageOutput := int(float64(plr.Race.BonusDamage+plr.Weapon.Damage) * damageMultiplier)
 		attackedEntity.TakeDamage(damageOutput)
 
 	case "Spell":
 		if spellUsed.Cost >= plr.Mana {
 			plr.Mana -= spellUsed.Cost
-			damageOutput := plr.Race.BonusDamage + spellUsed.Damage
+			damageOutput := int(float64(plr.Race.BonusDamage+spellUsed.Damage) * damageMultiplier)
 			attackedEntity.TakeDamage(damageOutput)
 		}
 	}
