@@ -20,11 +20,8 @@ func CreateSaveFile(fileName string) (*os.File, error) {
 	if SaveId == "" {
 		return nil, errors.New("save id is not set")
 	}
-	if !isSaveFolderExists() {
-		err := os.Mkdir("saves/"+SaveId, 0755) // 0755 is the permission for the save folder
-		if err != nil {
-			return nil, err
-		}
+	if err := os.MkdirAll("saves/"+SaveId, 0755); err != nil {
+		return nil, err
 	}
 
 	path := "saves/" + SaveId + "/" + fileName + ".json"
