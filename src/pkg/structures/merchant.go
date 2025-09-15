@@ -26,8 +26,8 @@ func (m *Merchant) RemoveItem(entry InventoryEntry) {
 	}
 }
 
-func (m *Merchant) BuyItem(entity *Player, entry InventoryEntry) bool {
-	if entity.Money < entry.GetItem().Price {
+func (m *Merchant) BuyItem(player *Player, entry InventoryEntry) bool {
+	if player.Money < entry.GetItem().Price {
 		return false
 	}
 
@@ -35,11 +35,13 @@ func (m *Merchant) BuyItem(entity *Player, entry InventoryEntry) bool {
 		m.FirstHealBought = true
 	}
 
-	entity.Money -= entry.GetItem().Price
+	player.Money -= entry.GetItem().Price
 	for _, item := range m.Inventory {
 		if item.GetItem().Id == entry.GetItem().Id {
-			entity.AddItem(item)
+			player.AddItem(item)
 			m.RemoveItem(entry)
+			save.SaveAny("merchant", m)
+			save.SaveAny("player", player)
 			return true
 		}
 	}
@@ -56,6 +58,7 @@ func (m *Merchant) Refill() {
 	for range "123" {
 		m.Inventory = append(m.Inventory, GetRandomItemByRarity())
 	}
+	save.SaveAny("merchant", m)
 }
 
 func InitMerchant() Merchant {
