@@ -93,9 +93,9 @@ func (plr *Player) UsePotion(p Potion) bool {
 	return false
 }
 
-func InitCharacter(username, race, saveId string) Player {
+func InitCharacter(username, race string) Player {
 	mainPlayer := Player{}
-	err := save.LoadAny(saveId, "player", &mainPlayer)
+	err := save.LoadAny("player", &mainPlayer)
 	if err != nil {
 		mainPlayer = Player{
 			Entity: Entity{
@@ -136,7 +136,7 @@ func InitCharacter(username, race, saveId string) Player {
 		for range "123" {
 			mainPlayer.AddItem(GetPotion("Heal", 1, 0))
 		}
-		save.SaveAny(saveId, "player", mainPlayer)
+		save.SaveAny("player", mainPlayer)
 	}
 
 	return mainPlayer
