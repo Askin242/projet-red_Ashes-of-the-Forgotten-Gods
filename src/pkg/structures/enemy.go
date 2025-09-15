@@ -6,10 +6,10 @@ type Enemy struct {
 	EnemyRace
 }
 
-func (enm *Enemy) InflictDamage(Action string, attackedEntity *Entity) {
+func (enm *Enemy) InflictDamage(Action string, attackedEntity *Entity, spellUsed Spell, multi float64) {
 	switch Action {
 	case "Melee":
-		damageOutput := enm.EnemyRace.BonusDamage + enm.Weapon.Damage
+		damageOutput := int(float64(enm.EnemyRace.BonusDamage+enm.Weapon.Damage) * multi)
 		attackedEntity.TakeDamage(damageOutput)
 	}
 }

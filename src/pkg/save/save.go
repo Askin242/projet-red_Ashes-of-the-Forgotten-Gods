@@ -6,20 +6,25 @@ import (
 	"os"
 )
 
-func isSaveFolderExists(saveId string) bool {
-	_, err := os.Stat("saves/" + saveId)
+var SaveId string
+
+func isSaveFolderExists() bool {
+	if SaveId == "" {
+		return false
+	}
+	_, err := os.Stat("saves/" + SaveId)
 	return err == nil
 }
 
-func CreateSaveFile(saveId, fileName string) (*os.File, error) {
-	if !isSaveFolderExists(saveId) {
-		err := os.Mkdir("saves/"+saveId, 0755) // 0755 is the permission for the save folder
-		if err != nil {
-			return nil, err
-		}
+func CreateSaveFile(fileName string) (*os.File, error) {
+	if SaveId == "" {
+		return nil, errors.New("save id is not set")
+	}
+	if err := os.MkdirAll("saves/"+SaveId, 0755); err != nil {
+		return nil, err
 	}
 
-	path := "saves/" + saveId + "/" + fileName + ".json"
+	path := "saves/" + SaveId + "/" + fileName + ".json"
 	jsonFile, err := os.Create(path)
 	if err != nil {
 		return nil, err
@@ -27,8 +32,8 @@ func CreateSaveFile(saveId, fileName string) (*os.File, error) {
 	return jsonFile, nil
 }
 
-func SaveAny(saveId, fileName string, obj interface{}) error {
-	jsonFile, err := CreateSaveFile(saveId, fileName)
+func SaveAny(fileName string, obj interface{}) error {
+	jsonFile, err := CreateSaveFile(fileName)
 	if err != nil {
 		return err
 	}
@@ -42,12 +47,12 @@ func SaveAny(saveId, fileName string, obj interface{}) error {
 	return encoder.Encode(obj)
 }
 
-func LoadAny(saveId, fileName string, obj interface{}) error {
-	if !isSaveFolderExists(saveId) {
+func LoadAny(fileName string, obj interface{}) error {
+	if !isSaveFolderExists() {
 		return errors.New("save folder does not exist")
 	}
 
-	path := "saves/" + saveId + "/" + fileName + ".json"
+	path := "saves/" + SaveId + "/" + fileName + ".json"
 	jsonFile, err := os.Open(path)
 	if err != nil {
 		return err

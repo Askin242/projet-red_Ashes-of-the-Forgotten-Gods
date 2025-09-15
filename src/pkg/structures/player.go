@@ -15,16 +15,16 @@ type Player struct {
 	Spells         []Spell
 }
 
-func (plr *Player) InflictDamage(Action string, attackedEntity *Entity, spellUsed Spell) {
+func (plr *Player) InflictDamage(Action string, attackedEntity *Entity, spellUsed Spell, damageMultiplier float64) {
 	switch Action {
 	case "Melee":
-		damageOutput := plr.Race.BonusDamage + plr.Weapon.Damage
+		damageOutput := int(float64(plr.Race.BonusDamage+plr.Weapon.Damage) * damageMultiplier)
 		attackedEntity.TakeDamage(damageOutput)
 
 	case "Spell":
 		if spellUsed.Cost >= plr.Mana {
 			plr.Mana -= spellUsed.Cost
-			damageOutput := plr.Race.BonusDamage + spellUsed.Damage
+			damageOutput := int(float64(plr.Race.BonusDamage+spellUsed.Damage) * damageMultiplier)
 			attackedEntity.TakeDamage(damageOutput)
 		}
 	}
@@ -93,9 +93,9 @@ func (plr *Player) UsePotion(p Potion) bool {
 	return false
 }
 
-func InitCharacter(username, race, saveId string) Player {
+func InitCharacter(username, race string) Player {
 	mainPlayer := Player{}
-	err := save.LoadAny(saveId, "player", &mainPlayer)
+	err := save.LoadAny("player", &mainPlayer)
 	if err != nil {
 		mainPlayer = Player{
 			Entity: Entity{
@@ -136,7 +136,7 @@ func InitCharacter(username, race, saveId string) Player {
 		for range "123" {
 			mainPlayer.AddItem(GetPotion("Heal", 1, 0))
 		}
-		save.SaveAny(saveId, "player", mainPlayer)
+		save.SaveAny("player", mainPlayer)
 	}
 
 	return mainPlayer

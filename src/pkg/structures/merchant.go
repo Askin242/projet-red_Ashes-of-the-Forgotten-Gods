@@ -58,9 +58,9 @@ func (m *Merchant) Refill() {
 	}
 }
 
-func InitMerchant(saveId string) Merchant {
+func InitMerchant() Merchant {
 	m := Merchant{}
-	err := save.LoadAny(saveId, "merchant", &m)
+	err := save.LoadAny("merchant", &m)
 	if err != nil {
 		m := Merchant{
 			Entity: Entity{
@@ -72,7 +72,7 @@ func InitMerchant(saveId string) Merchant {
 			FirstHealBought: false,
 		}
 		m.Refill()
-		save.SaveAny(saveId, "merchant", m)
+		save.SaveAny("merchant", m)
 	}
 	m.StartAutoRefill()
 	return m
