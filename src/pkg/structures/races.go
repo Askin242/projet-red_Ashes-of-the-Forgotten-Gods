@@ -4,7 +4,7 @@ type Race struct {
 	Name        string
 	BonusHP     int
 	BonusDamage int
-	Skill       Spells
+	Skill       Spell
 	BonusMana   int
 }
 
@@ -12,7 +12,7 @@ type EnemyRace struct {
 	Name        string
 	BonusHP     int
 	BonusDamage int
-	Skill       Spells
+	Skill       Spell
 	BonusMana   int
 }
 

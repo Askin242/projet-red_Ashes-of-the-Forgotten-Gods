@@ -10,7 +10,7 @@ type Player struct {
 	MaxCarryWeight int
 }
 
-func (plr *Player) InflictDamage(Action string, attackedEntity Entity, spellUsed Spells) {
+func (plr *Player) InflictDamage(Action string, attackedEntity Entity, spellUsed Spell) {
 	switch Action {
 	case "Melee":
 		damageOutput := plr.Race.BonusDamage + plr.Weapon.Damage
