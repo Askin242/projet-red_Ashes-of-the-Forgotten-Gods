@@ -27,4 +27,5 @@ var (
 var AllSpells = map[string]Spell{
 	"Fireball":  Fireball,
 	"HandPunch": HandPunch,
+	"None":      None,
 }

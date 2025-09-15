@@ -6,6 +6,7 @@ type Entity struct {
 	Name       string
 	Alive      bool
 	Level      int
+	Initiative int
 	Helmet     Armors
 	Chestplate Armors
 	Boots      Armors

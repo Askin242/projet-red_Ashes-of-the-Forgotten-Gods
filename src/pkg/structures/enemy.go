@@ -6,7 +6,7 @@ type Enemy struct {
 	EnemyRace
 }
 
-func (enm *Enemy) InflictDamage(Action string, attackedEntity Entity) {
+func (enm *Enemy) InflictDamage(Action string, attackedEntity *Entity) {
 	switch Action {
 	case "Melee":
 		damageOutput := enm.EnemyRace.BonusDamage + enm.Weapon.Damage
@@ -25,6 +25,7 @@ func InitEnemy(name string, race string) Enemy {
 			Helmet:     GetRandomArmorByType("Helmet"),
 			Chestplate: GetRandomArmorByType("Chestplate"),
 			Boots:      GetRandomArmorByType("Boots"),
+			Initiative: 0,
 		},
 		Weapon:    AllWeapons["Sword"],
 		EnemyRace: AllEnemyRaces[race],
