@@ -1,25 +1,43 @@
 package structures
 
-type Spells struct {
+type Spell struct {
 	Name   string
 	Cost   int
 	Damage int
 }
 
 var (
-	Fireball = Spells{
+	Fireball = Spell{
 		Name:   "Fireball",
-		Damage: 50,
+		Damage: 9,
 		Cost:   30,
 	}
-	HandPunch = Spells{
+	PoisonFlask = Spell{
+		Name:   "Poison Flask",
+		Damage: 5,
+		Cost:   15,
+	}
+	LightningStrike = Spell{
+		Name:   "Lightning Strike",
+		Damage: 12,
+		Cost:   40,
+	}
+	HandPunch = Spell{
 		Name:   "Ice Blast",
-		Damage: 30,
+		Damage: 7,
 		Cost:   20,
+	}
+	None = Spell{
+		Name:   "None",
+		Damage: 0,
+		Cost:   0,
 	}
 )
 
-var AllSpells = map[string]Spells{
-	"Fireball":  Fireball,
-	"HandPunch": HandPunch,
+var AllSpells = map[string]Spell{
+	"Fireball":        Fireball,
+	"HandPunch":       HandPunch,
+	"PoisonFlask":     PoisonFlask,
+	"LightningStrike": LightningStrike,
+	"None":            None,
 }
