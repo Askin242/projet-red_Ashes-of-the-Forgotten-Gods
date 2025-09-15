@@ -72,6 +72,14 @@ func isLatinOnly(s string) bool {
 	return true
 }
 
+func getLengthFromString(s string) int {
+	counter := 0
+	for range s {
+		counter++
+	}
+	return counter
+}
+
 func checkInput(g *gocui.Gui) {
 	errMsg = ""
 	v, _ := g.View("username")
@@ -90,6 +98,16 @@ func checkInput(g *gocui.Gui) {
 
 	if seed != "" && !isLatinOnly(seed) {
 		errMsg = "Seed must be letters only"
+	}
+
+	if getLengthFromString(user) > 10 {
+		errMsg = "Username is too long, max 10 characters"
+		return
+	}
+
+	if getLengthFromString(seed) > 10 {
+		errMsg = "Seed is too long, max 10 characters"
+		return
 	}
 }
 
