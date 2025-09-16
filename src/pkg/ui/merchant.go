@@ -13,7 +13,49 @@ var (
 	merchantSelected int
 )
 
+func updateMerchantHover(g *gocui.Gui, merchant *structures.Merchant) {
+	mx, my := g.MousePosition()
+	listView, _ := g.View("merchant_list")
+	if listView == nil {
+		return
+	}
+	x0, y0, x1, y1 := listView.Dimensions()
+	if mx >= x0 && mx <= x1 && my >= y0 && my <= y1 {
+		idx := my - y0 - 1
+		if IsValidIndex(idx, len(merchant.Inventory)) && idx != merchantSelected {
+			merchantSelected = idx
+			g.Update(func(*gocui.Gui) error { return nil })
+		}
+	}
+}
+
+func attemptPurchase(g *gocui.Gui, merchant *structures.Merchant, player *structures.Player, itemIndex int) error {
+	if !IsValidIndex(itemIndex, len(merchant.Inventory)) {
+		return nil
+	}
+
+	entry := merchant.Inventory[itemIndex]
+	item := entry.GetItem()
+
+	if player.Money < item.Price {
+		return ShowMessageWithOk(g, "merchant", "Merchant", fmt.Sprintf("Not enough gold for %s", item.Name), 50, 7)
+	}
+	if !player.CanAddItem(entry) {
+		return ShowMessageWithOk(g, "merchant", "Merchant", "Inventory is too heavy", 50, 7)
+	}
+
+	ok := merchant.BuyItem(player, entry)
+	if ok {
+		if merchantSelected >= len(merchant.Inventory) && merchantSelected > 0 {
+			merchantSelected = len(merchant.Inventory) - 1
+		}
+		return ShowMessageWithOk(g, "merchant", "Merchant", fmt.Sprintf("Purchased %s", item.Name), 50, 7)
+	}
+	return ShowMessageWithOk(g, "merchant", "Merchant", "Purchase failed", 50, 7)
+}
+
 func ShowMerchantMenu(merchant *structures.Merchant, player *structures.Player) {
+	merchantSelected = 0
 	g, _ := gocui.NewGui(gocui.OutputNormal, false)
 	defer g.Close()
 
@@ -25,15 +67,14 @@ func ShowMerchantMenu(merchant *structures.Merchant, player *structures.Player) 
 func merchantLayout(g *gocui.Gui, merchant *structures.Merchant, player *structures.Player) error {
 	maxX, maxY := g.Size()
 
-	if v, err := g.SetView("merchant_title", 0, 0, maxX-1, 2, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
-			return err
-		}
+	updateMerchantHover(g, merchant)
+
+	if err := SetOrUpdateView(g, "merchant_title", 0, 0, maxX-1, 2, func(v *gocui.View) {
 		v.Frame = false
+	}, func(v *gocui.View) {
 		fmt.Fprintf(v, "  Merchant • Gold: %d\n", player.Money)
-	} else {
-		v.Clear()
-		fmt.Fprintf(v, "  Merchant • Gold: %d\n", player.Money)
+	}); err != nil {
+		return err
 	}
 
 	listWidth := maxX - 2
@@ -53,17 +94,15 @@ func merchantLayout(g *gocui.Gui, merchant *structures.Merchant, player *structu
 
 	if v, err := g.View("merchant_list"); err == nil {
 		v.Clear()
-		for i, entry := range merchant.Inventory {
-			item := entry.GetItem()
-			line := fmt.Sprintf("%s  | Price: %d  | Rarity: %d", item.Name, item.Price, item.Rarity)
-			if i == merchantSelected {
-				fmt.Fprintf(v, "\u001b[7m%s\u001b[0m\n", line)
-			} else {
-				fmt.Fprintln(v, line)
-			}
-		}
 		if len(merchant.Inventory) == 0 {
 			fmt.Fprintln(v, "(Merchant will restock soon...)")
+		} else {
+			lines := make([]string, 0, len(merchant.Inventory))
+			for _, entry := range merchant.Inventory {
+				item := entry.GetItem()
+				lines = append(lines, fmt.Sprintf("%s  | Price: %d  | Rarity: %d", item.Name, item.Price, item.Rarity))
+			}
+			RenderListWithHighlight(v, lines, merchantSelected)
 		}
 	}
 
@@ -102,99 +141,37 @@ func merchantLayout(g *gocui.Gui, merchant *structures.Merchant, player *structu
 }
 
 func merchantKeybindings(g *gocui.Gui, merchant *structures.Merchant, player *structures.Player) error {
-	g.SetKeybinding("", gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		return gocui.ErrQuit
-	})
+	BindQuitOnEsc(g)
 
-	g.SetKeybinding("merchant_list", gocui.KeyArrowUp, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		if merchantSelected > 0 {
-			merchantSelected--
-		}
-		return nil
-	})
-
-	g.SetKeybinding("merchant_list", gocui.KeyArrowDown, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		if merchantSelected < len(merchant.Inventory)-1 {
-			merchantSelected++
-		}
-		return nil
-	})
+	BindListNavigation(g, "merchant_list", &merchantSelected, func() int { return len(merchant.Inventory) })
 
 	g.SetKeybinding("merchant_list", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		if len(merchant.Inventory) == 0 {
-			return nil
-		}
-		if merchantSelected < 0 || merchantSelected >= len(merchant.Inventory) {
-			return nil
-		}
-		entry := merchant.Inventory[merchantSelected]
-		item := entry.GetItem()
-
-		if player.Money < item.Price {
-			return showMerchantMessage(g, fmt.Sprintf("Not enough gold for %s", item.Name))
-		}
-		if !player.CanAddItem(entry) {
-			return showMerchantMessage(g, "Inventory is too heavy")
-		}
-
-		ok := merchant.BuyItem(player, entry)
-		if ok {
-			if merchantSelected >= len(merchant.Inventory) && merchantSelected > 0 {
-				merchantSelected = len(merchant.Inventory) - 1
-			}
-			return showMerchantMessage(g, fmt.Sprintf("Purchased %s", item.Name))
-		}
-		return showMerchantMessage(g, "Purchase failed")
+		return attemptPurchase(g, merchant, player, merchantSelected)
 	})
 
-	g.Mouse = true
-	g.SetKeybinding("", gocui.MouseLeft, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+	EnableMouseAndSetHandler(g, func(g *gocui.Gui, v *gocui.View) error {
 		mx, my := g.MousePosition()
-		if isMouseOver(g, "merchant_ok", mx, my) {
-			g.DeleteView("merchant_msg")
-			g.DeleteView("merchant_ok")
-			return nil
+
+		if listView, _ := g.View("merchant_list"); listView != nil {
+			x0, y0, x1, y1 := listView.Dimensions()
+			if mx >= x0 && mx <= x1 && my >= y0 && my <= y1 {
+				idx := my - y0 - 1
+				if IsValidIndex(idx, len(merchant.Inventory)) {
+					merchantSelected = idx
+					g.Update(func(*gocui.Gui) error { return nil })
+					return attemptPurchase(g, merchant, player, merchantSelected)
+				}
+			}
 		}
-		if isMouseOver(g, "merchant_close", mx, my) {
-			return gocui.ErrQuit
+
+		buttons := []ButtonHandler{
+			{"merchant_close", func(g *gocui.Gui, v *gocui.View) error { return gocui.ErrQuit }},
+			{"merchant_ok", func(g *gocui.Gui, v *gocui.View) error {
+				DeleteViews(g, "merchant_msg", "merchant_ok")
+				return nil
+			}},
 		}
-		return nil
-	})
-	return nil
-}
-
-func showMerchantMessage(g *gocui.Gui, message string) error {
-	maxX, maxY := g.Size()
-	msgWidth := 50
-	msgHeight := 7
-	x := (maxX - msgWidth) / 2
-	y := (maxY - msgHeight) / 2
-
-	if v, err := g.SetView("merchant_msg", x, y, x+msgWidth, y+msgHeight, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
-			return err
-		}
-		v.Title = " Merchant "
-		fmt.Fprintf(v, "\n  %s\n\n", message)
-	} else {
-		v.Clear()
-		v.Title = " Merchant "
-		fmt.Fprintf(v, "\n  %s\n\n", message)
-	}
-
-	btnX := x + msgWidth - 14
-	btnY := y + msgHeight - 2
-	createButton(g, "merchant_ok", " OK ", btnX, btnY-1, 10, 2, "merchant_ok")
-
-	g.SetKeybinding("merchant_ok", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		g.DeleteView("merchant_msg")
-		g.DeleteView("merchant_ok")
-		return nil
-	})
-	g.SetKeybinding("merchant_msg", gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		g.DeleteView("merchant_msg")
-		g.DeleteView("merchant_ok")
-		return nil
+		return HandleMouseClickButtons(g, mx, my, buttons)
 	})
 	return nil
 }
