@@ -14,6 +14,7 @@ type EnemyRace struct {
 	BonusDamage int
 	Skill       Spell
 	BonusMana   int
+	Drop        string
 }
 
 var (
@@ -42,16 +43,19 @@ var (
 		Name:        "Orc",
 		BonusHP:     10,
 		BonusDamage: 15,
+		Drop:        "OrcTusk",
 	}
 	Skeleton = EnemyRace{
 		Name:        "Skeleton",
 		BonusHP:     -30,
 		BonusDamage: 20,
+		Drop:        "SkeletonBone",
 	}
 	Goblin = EnemyRace{
 		Name:        "Goblin",
 		BonusHP:     10,
 		BonusDamage: 10,
+		Drop:        "GoblinEar",
 	}
 )
 
