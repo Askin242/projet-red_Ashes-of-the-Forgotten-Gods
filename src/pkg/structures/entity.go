@@ -24,6 +24,9 @@ type Entity struct {
 func (ent *Entity) TakeDamage(damage int) {
 	defense := ent.Helmet.Defense + ent.Chestplate.Defense + ent.Boots.Defense + GetSetBonusDefense(*ent)
 	damage -= defense
+	if damage < 0 {
+		damage = 0
+	}
 	if ent.HP-damage <= 0 {
 		ent.HP = 0
 		ent.Alive = false
