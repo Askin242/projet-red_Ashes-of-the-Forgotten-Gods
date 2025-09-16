@@ -29,17 +29,17 @@ func craftingRulesForWeapon(w Weapon) (minutes int, mats map[string]int) {
 	case 4:
 		mats["OrcTusk"] = 3
 		mats["SkeletonBone"] = 2
-		return 10, mats
+		return 3, mats
 	case 3:
 		mats["SkeletonBone"] = 2
 		mats["GoblinEar"] = 1
-		return 7, mats
+		return 2, mats
 	case 2:
 		mats["GoblinEar"] = 2
-		return 5, mats
+		return 1, mats
 	default:
 		mats["GoblinEar"] = 1
-		return 3, mats
+		return 1, mats
 	}
 }
 
