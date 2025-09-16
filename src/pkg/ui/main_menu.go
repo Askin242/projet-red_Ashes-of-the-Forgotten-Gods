@@ -3,9 +3,6 @@ package ui
 import (
 	"errors"
 	"fmt"
-	"os/exec"
-	"runtime"
-	"strings"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -38,47 +35,6 @@ var fields = []string{"username", "race", "seed"}
 var fieldIndex = 0
 var races = []string{"Human", "Elf", "Dwarf"}
 var raceIndex = 0
-
-func setTerminalSize(cols, rows int) {
-	if runtime.GOOS == "windows" {
-		cmd := exec.Command("cmd", "/C", fmt.Sprintf("mode con: cols=%d lines=%d", cols, rows))
-		cmd.Run()
-	} else {
-		fmt.Printf("\033[8;%d;%dt", rows, cols)
-	}
-}
-
-func centerText(text string, width int) string {
-	lines := strings.Split(text, "\n")
-	var centeredLines []string
-
-	for _, line := range lines {
-		spaces := (width - len(line)) / 2
-		centeredLines = append(centeredLines, strings.Repeat(" ", spaces)+line)
-	}
-
-	return strings.Join(centeredLines, "\n")
-}
-
-func isLatinOnly(s string) bool {
-	if s == "" {
-		return false
-	}
-	for _, c := range s {
-		if c < 'A' || (c > 'Z' && c < 'a') || c > 'z' {
-			return false
-		}
-	}
-	return true
-}
-
-func getLengthFromString(s string) int {
-	counter := 0
-	for range s {
-		counter++
-	}
-	return counter
-}
 
 func checkInput(g *gocui.Gui) {
 	errMsg = ""
@@ -199,13 +155,13 @@ func layout(g *gocui.Gui) error {
 		}
 
 		labelY := formY + 2
-		createFormField(g, "username_label", "username", "Username:", formX+2, labelY, formX+formWidth-2, labelY+2, true)
+		CreateFormField(g, "username_label", "username", "Username:", formX+2, labelY, formX+formWidth-2, labelY+2, true, username, seed, races, raceIndex)
 
 		labelY += 3
-		createFormField(g, "race_label", "race", "Race:", formX+2, labelY, formX+formWidth-2, labelY+2, false)
+		CreateFormField(g, "race_label", "race", "Race:", formX+2, labelY, formX+formWidth-2, labelY+2, false, username, seed, races, raceIndex)
 
 		labelY += 3
-		createFormField(g, "seed_label", "seed", "Seed:", formX+2, labelY, formX+formWidth-2, labelY+2, true)
+		CreateFormField(g, "seed_label", "seed", "Seed:", formX+2, labelY, formX+formWidth-2, labelY+2, true, username, seed, races, raceIndex)
 
 		buttonY := formY + formHeight - 5
 		createButton(g, "save_button", " Save ", formX+15, buttonY-1, 10, 2, "save_button")
@@ -258,101 +214,9 @@ func showNewGameForm(g *gocui.Gui, v *gocui.View) error {
 
 func showDialog(g *gocui.Gui, title, message string) error {
 	dialog = true
-	maxX, maxY := g.Size()
-	msgWidth := 50
-	msgHeight := 10
-	msgX := (maxX - msgWidth) / 2
-	msgY := (maxY - msgHeight) / 2
-
-	if v, err := g.SetView("message", msgX, msgY, msgX+msgWidth, msgY+msgHeight, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
-			return err
-		}
-		v.Frame = true
-		v.Title = title
-		fmt.Fprintln(v, "\n  "+message)
-		fmt.Fprintln(v, "  (Not implemented)")
-		fmt.Fprintln(v, "")
-
-		g.SetKeybinding("message", gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-			dialog = false
-			return g.DeleteView("message")
-		})
-	}
-
-	buttonY := msgY + msgHeight - 2
-	buttonX := msgX + msgWidth - 14
-	if v, err := g.SetView("go_back_button", buttonX, buttonY-1, buttonX+12, buttonY+1, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
-			return err
-		}
-		v.Frame = true
-		if hovered == "go_back_button" {
-			v.BgColor = gocui.ColorYellow
-			v.FgColor = gocui.ColorBlack
-		}
-		fmt.Fprint(v, " Go Back ")
-	}
-
-	g.SetKeybinding("go_back_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+	return ShowSimpleDialog(g, "main", title, message, " Go Back ", 50, 10, func() {
 		dialog = false
-		g.DeleteView("message")
-		g.DeleteView("go_back_button")
-		return nil
 	})
-
-	return nil
-}
-
-func createButton(g *gocui.Gui, name, text string, x, y, w, h int, hoverName string) error {
-	if v, err := g.SetView(name, x, y, x+w, y+h, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
-			return err
-		}
-		v.Frame = true
-		if hovered == hoverName {
-			v.BgColor = gocui.ColorYellow
-			v.FgColor = gocui.ColorBlack
-		}
-		fmt.Fprint(v, text)
-	}
-	return nil
-}
-
-func createFormField(g *gocui.Gui, labelName, fieldName, labelText string, x, y, w, h int, editable bool) error {
-	// Create label
-	if v, err := g.SetView(labelName, x, y, x+10, y+2, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
-			return err
-		}
-		v.Frame = false
-		fmt.Fprint(v, labelText)
-	}
-
-	// Create field with appropriate width (30 characters max)
-	fieldWidth := 50
-	if fieldWidth > w-x-11 {
-		fieldWidth = w - x - 11
-	}
-	if v, err := g.SetView(fieldName, x+11, y, x+11+fieldWidth, y+2, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
-			return err
-		}
-		v.Frame = true
-		v.Editable = editable
-		v.Wrap = false
-		if fieldName == "username" {
-			fmt.Fprint(v, username)
-		} else if fieldName == "seed" {
-			fmt.Fprint(v, seed)
-		} else if fieldName == "race" {
-			fmt.Fprintf(v, "< %s >", races[raceIndex])
-		}
-	} else if fieldName == "race" {
-		v.Clear()
-		fmt.Fprintf(v, "< %s >", races[raceIndex])
-	}
-	return nil
 }
 
 func loadGameFile(g *gocui.Gui, v *gocui.View) error {
@@ -404,7 +268,6 @@ func saveForm(g *gocui.Gui) error {
 func cancelForm(g *gocui.Gui) error {
 	inForm = false
 	errMsg = ""
-	// cleanup form views
 	views := []string{"form", "username_label", "username", "race_label", "race", "seed_label", "seed", "save_button", "cancel_button", "form_instructions", "error_message", "saved", "saved_go_back_button"}
 	for _, v := range views {
 		g.DeleteView(v)
@@ -486,18 +349,8 @@ func keybindings(g *gocui.Gui) error {
 		return cancelForm(g)
 	})
 
-	g.Mouse = true
-	g.SetKeybinding("", gocui.MouseLeft, gocui.ModNone, handleMouseClick)
+	EnableMouseAndSetHandler(g, handleMouseClick)
 	return nil
-}
-
-func isMouseOver(g *gocui.Gui, viewName string, mx, my int) bool {
-	view, _ := g.View(viewName)
-	if view == nil {
-		return false
-	}
-	x0, y0, x1, y1 := view.Dimensions()
-	return mx >= x0 && mx <= x1 && my >= y0 && my <= y1
 }
 
 func updateHoverEffects(g *gocui.Gui) {
@@ -518,7 +371,7 @@ func updateHoverEffects(g *gocui.Gui) {
 		}
 	} else {
 		newHoveredButton := ""
-		buttonNames := []string{"save_button", "cancel_button", "saved_go_back_button", "go_back_button"}
+		buttonNames := []string{"save_button", "cancel_button", "saved_go_back_button", "main_dialog_btn"}
 
 		for _, btnName := range buttonNames {
 			if isMouseOver(g, btnName, mx, my) {
@@ -574,37 +427,36 @@ func handleMouseClick(g *gocui.Gui, v *gocui.View) error {
 			}
 		}
 
-		if isMouseOver(g, "save_button", mx, my) {
-			hovered = ""
-			return saveForm(g)
+		buttons := []ButtonHandlerWithHover{
+			{"save_button", func(g *gocui.Gui, v *gocui.View) error { return saveForm(g) }, func() { hovered = "" }},
+			{"cancel_button", func(g *gocui.Gui, v *gocui.View) error { return cancelForm(g) }, func() { hovered = "" }},
+			{"saved_go_back_button", func(g *gocui.Gui, v *gocui.View) error {
+				g.DeleteView("saved")
+				g.DeleteView("saved_go_back_button")
+				return cancelForm(g)
+			}, func() { hovered = "" }},
 		}
-
-		if isMouseOver(g, "cancel_button", mx, my) {
-			hovered = ""
-			return cancelForm(g)
-		}
-
-		if isMouseOver(g, "saved_go_back_button", mx, my) {
-			hovered = ""
-			g.DeleteView("saved")
-			g.DeleteView("saved_go_back_button")
-			return cancelForm(g)
+		if err := HandleMouseClickButtonsWithHover(g, mx, my, buttons); err != nil {
+			return err
 		}
 	}
 
-	if isMouseOver(g, "go_back_button", mx, my) {
-		hovered = ""
-		dialog = false
-		g.DeleteView("message")
-		g.DeleteView("go_back_button")
-		return nil
+	mainButtons := []ButtonHandlerWithHover{
+		{"main_dialog_btn", func(g *gocui.Gui, v *gocui.View) error {
+			dialog = false
+			g.DeleteView("main_dialog")
+			g.DeleteView("main_dialog_btn")
+			return nil
+		}, func() { hovered = "" }},
+	}
+	if err := HandleMouseClickButtonsWithHover(g, mx, my, mainButtons); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func ShowMainMenu() {
-	setTerminalSize(150, 38)
 	g, _ = gocui.NewGui(gocui.OutputNormal, false)
 	defer g.Close()
 	g.SetManagerFunc(layout)

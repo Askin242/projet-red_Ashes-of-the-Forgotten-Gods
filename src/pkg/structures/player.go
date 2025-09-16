@@ -1,6 +1,7 @@
 package structures
 
 import (
+	"fmt"
 	"main/pkg/save"
 )
 
@@ -15,19 +16,56 @@ type Player struct {
 	Spells         []Spell
 }
 
-func (plr *Player) InflictDamage(Action string, attackedEntity *Entity, spellUsed Spell) {
-	switch Action {
-	case "Melee":
-		damageOutput := plr.Race.BonusDamage + plr.Weapon.Damage
-		attackedEntity.TakeDamage(damageOutput)
+func ApplySpellEffect(spell Spell, target *Entity) {
+	switch spell.Element {
+	case "Fire":
+		target.Effects = append(target.Effects, Effect{
+			Name:     "Burn",
+			Duration: 3,
+			Modifier: 0.04, // 4% HP per turn
+		})
 
+	case "Poison":
+		target.Effects = append(target.Effects, Effect{
+			Name:     "Poisoned",
+			Duration: 2,
+			Modifier: 0.4, // Reduce defense by 40%
+		})
+
+	case "Lightning":
+		target.Effects = append(target.Effects, Effect{
+			Name:     "Shocked",
+			Duration: 3,
+			Modifier: 0.1, // 10% chance to miss
+		})
+
+	case "Ice":
+		target.Effects = append(target.Effects, Effect{
+			Name:     "Frozen",
+			Duration: 3,
+			Modifier: 0.75, // 25% damage reduction
+		})
+	}
+}
+
+func (plr *Player) InflictDamage(action string, attackedEntity *Entity, spellUsed Spell, damageMultiplier float64) int {
+	switch action {
+	case "Melee":
+		damageOutput := int(float64(plr.Race.BonusDamage+plr.Weapon.Damage) * damageMultiplier)
+		attackedEntity.TakeDamage(damageOutput)
+		return damageOutput
 	case "Spell":
-		if spellUsed.Cost >= plr.Mana {
+		if spellUsed.Cost <= plr.Mana {
 			plr.Mana -= spellUsed.Cost
-			damageOutput := plr.Race.BonusDamage + spellUsed.Damage
+			damageOutput := int(float64(plr.Race.BonusDamage+spellUsed.Damage) * damageMultiplier)
 			attackedEntity.TakeDamage(damageOutput)
+			ApplySpellEffect(spellUsed, attackedEntity)
+			return damageOutput
+		} else {
+			fmt.Println("Not enough mana!")
 		}
 	}
+	return 0
 }
 
 func (plr *Player) LevelUp() int {
@@ -48,7 +86,7 @@ func (plr *Player) CurrentCarryWeight() int {
 }
 
 func (plr *Player) CanAddItem(entry InventoryEntry) bool {
-	return plr.CurrentCarryWeight()+entry.GetItem().Weight <= plr.MaxCarryWeight
+	return plr.CurrentCarryWeight()+entry.GetItem().Weight < plr.MaxCarryWeight // Not <= to allow to add materials (0weight) even if full
 }
 
 func (plr *Player) AddItem(entry InventoryEntry) bool {
@@ -67,6 +105,53 @@ func (plr *Player) RemoveItem(entry InventoryEntry) bool {
 		}
 	}
 	return false
+}
+
+func (plr *Player) CountMaterial(materialName string) int {
+	count := 0
+	for _, entry := range plr.Inventory {
+		if m, ok := entry.(Material); ok {
+			if m.Key == materialName {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func (plr *Player) RemoveMaterials(materialName string, amount int) int {
+	removed := 0
+	for i := 0; i < len(plr.Inventory) && removed < amount; i++ {
+		if m, ok := plr.Inventory[i].(Material); ok && m.Key == materialName {
+			plr.Inventory = append(plr.Inventory[:i], plr.Inventory[i+1:]...)
+			removed++
+			i--
+		}
+	}
+	return removed
+}
+
+// Batch material utilities for crafting
+func (plr *Player) HasMaterialsBatch(req map[string]int) bool {
+	for key, amt := range req {
+		if plr.CountMaterial(key) < amt {
+			return false
+		}
+	}
+	return true
+}
+
+func (plr *Player) RemoveMaterialsBatch(req map[string]int) bool {
+	if !plr.HasMaterialsBatch(req) {
+		return false
+	}
+	for key, amt := range req {
+		removed := plr.RemoveMaterials(key, amt)
+		if removed < amt {
+			return false
+		}
+	}
+	return true
 }
 
 func (plr *Player) UpgradeInventorySlot() {
@@ -93,9 +178,9 @@ func (plr *Player) UsePotion(p Potion) bool {
 	return false
 }
 
-func InitCharacter(username, race, saveId string) Player {
+func InitCharacter(username, race string) Player {
 	mainPlayer := Player{}
-	err := save.LoadAny(saveId, "player", &mainPlayer)
+	err := save.LoadAny("player", &mainPlayer)
 	if err != nil {
 		mainPlayer = Player{
 			Entity: Entity{
@@ -136,7 +221,7 @@ func InitCharacter(username, race, saveId string) Player {
 		for range "123" {
 			mainPlayer.AddItem(GetPotion("Heal", 1, 0))
 		}
-		save.SaveAny(saveId, "player", mainPlayer)
+		save.SaveAny("player", mainPlayer)
 	}
 
 	return mainPlayer
