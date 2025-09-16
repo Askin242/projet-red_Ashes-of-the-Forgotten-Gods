@@ -21,30 +21,18 @@ type Entity struct {
 	Effects    []Effect
 }
 
-func (ent *Entity) TakeDamage(damage int) int {
+func (ent *Entity) TakeDamage(damage int) {
 	defense := ent.Helmet.Defense + ent.Chestplate.Defense + ent.Boots.Defense + GetSetBonusDefense(*ent)
-
-	// Convert defense to percentage reduction (10 defense = 20% reduction, max 85% reduction)
-	defensePercent := float64(defense) * 2.0
-	if defensePercent > 85 {
-		defensePercent = 85
+	damage -= defense
+	if damage < 0 {
+		damage = 0
 	}
-
-	// Apply percentage-based damage reduction
-	actualDamage := int(float64(damage) * (100.0 - defensePercent) / 100.0)
-
-	// Ensure minimum 1 damage if original damage > 0
-	if damage > 0 && actualDamage == 0 {
-		actualDamage = 1
-	}
-
-	if ent.HP-actualDamage <= 0 {
+	if ent.HP-damage <= 0 {
 		ent.HP = 0
 		ent.Alive = false
 	} else {
-		ent.HP -= actualDamage
+		ent.HP -= damage
 	}
-	return actualDamage
 }
 
 func ProcessEffects(entity *Entity) {

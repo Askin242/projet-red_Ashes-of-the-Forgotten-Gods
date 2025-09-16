@@ -48,23 +48,13 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 	reader := bufio.NewReader(os.Stdin)
 	roundNumber := 0
-	speed := 20 * time.Millisecond
+	speed := 150 * time.Millisecond
 
 	time.Sleep(4 * time.Second)
 	ui.ClearScreen()
 
 	for character.Alive && enemy.Entity.Alive {
 		roundNumber++
-
-		if playerTurn {
-			maxMana := 100 + character.Race.BonusMana
-			if character.Mana < maxMana {
-				character.Mana += 10
-				if character.Mana > maxMana {
-					character.Mana = maxMana
-				}
-			}
-		}
 
 		RenderFight(character, enemy, playerTurn, roundNumber)
 		structures.ProcessEffects(&character.Entity)
@@ -82,9 +72,9 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 				switch mode {
 				case "1":
-					rawDamage, actualDamage := character.InflictDamage("Melee", &enemy.Entity, structures.AllSpells["None"], 1.0)
-					fmt.Printf("[%s] used their weapon dealing %d damage (%d before defense) to [%s]!\n",
-						character.Entity.Name, actualDamage, rawDamage, enemy.Entity.Name)
+					damage := character.InflictDamage("Melee", &enemy.Entity, structures.AllSpells["None"], 1.0)
+					fmt.Printf("[%s] used their weapon dealing %d damage to [%s]!\n",
+						character.Entity.Name, damage, enemy.Entity.Name)
 					chosen = true
 					time.Sleep(2 * time.Second)
 					ui.ClearScreen()
@@ -109,9 +99,10 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 					if spellIndex > 0 && spellIndex <= len(character.Spells) {
 						chosenSpell := character.Spells[spellIndex-1]
-						rawDamage, actualDamage := character.InflictDamage("Spell", &enemy.Entity, chosenSpell, 1.0)
-						fmt.Printf("[%s] used %s dealing %d damage (%d before defense) to [%s]!\n",
-							character.Entity.Name, chosenSpell.Name, actualDamage, rawDamage, enemy.Entity.Name)
+						damage := character.InflictDamage("Spell", &enemy.Entity, chosenSpell, 1.0)
+						fmt.Println(damage)
+						fmt.Printf("[%s] used %s dealing %d damage to [%s]!\n",
+							character.Entity.Name, chosenSpell.Name, damage, enemy.Entity.Name)
 						chosen = true
 						time.Sleep(2 * time.Second)
 						ui.ClearScreen()
@@ -127,21 +118,10 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 			}
 		} else {
 			fmt.Println("\n!!! Incoming attack !!!")
-			fmt.Println("Quick Time Event: Time your block to reduce incoming damage!")
-			damageMultiplier := QuickTimeEvent(speed, 20)
-
-			baseDamage := enemy.EnemyRace.BonusDamage + enemy.Weapon.Damage
-			blockedDamage := int(float64(baseDamage) * (1.0 - damageMultiplier))
-
-			rawDamage, actualDamage := enemy.InflictDamage("Melee", &character.Entity, structures.AllSpells["None"], damageMultiplier)
-
-			if blockedDamage > 0 {
-				fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d blocked by timing, %d reduced by armor)!\n",
-					enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, blockedDamage, rawDamage-actualDamage)
-			} else {
-				fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d reduced by armor)!\n",
-					enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, rawDamage-actualDamage)
-			}
+			damageMultiplier := QuickTimeEvent(speed, 12)
+			damage := enemy.InflictDamage("Melee", &character.Entity, structures.AllSpells["None"], damageMultiplier)
+			fmt.Printf("[%s] attacked [%s] dealing %d damage!\n",
+				enemy.Entity.Name, character.Entity.Name, damage)
 		}
 
 		playerTurn = !playerTurn

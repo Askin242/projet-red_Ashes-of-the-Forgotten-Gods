@@ -24,47 +24,19 @@ func RenderFight(player *structures.Player, mob *structures.Enemy, playerPlaying
 		return strings.Repeat(" ", padding) + text
 	}
 
-	makePlayerBox := func(name string, hp, maxHP, level, mana, defense int, weapon string) []string {
+	makeBox := func(name string, hp, maxHP, level int, weapon string) []string {
 		lines := []string{}
 		lines = append(lines, fmt.Sprintf("+%s+", strings.Repeat("-", boxWidth-2)))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, name))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Health: %d/%d", hp, maxHP)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Mana: %d", mana)))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Level: %d", level)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Defense: %d%%", defense)))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Weapon: %s", weapon)))
 		lines = append(lines, fmt.Sprintf("+%s+", strings.Repeat("-", boxWidth-2)))
 		return lines
 	}
 
-	makeEnemyBox := func(name string, hp, maxHP, level, defense int, weapon string) []string {
-		lines := []string{}
-		lines = append(lines, fmt.Sprintf("+%s+", strings.Repeat("-", boxWidth-2)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, name))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Health: %d/%d", hp, maxHP)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, ""))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Level: %d", level)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Defense: %d%%", defense)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Weapon: %s", weapon)))
-		lines = append(lines, fmt.Sprintf("+%s+", strings.Repeat("-", boxWidth-2)))
-		return lines
-	}
-
-	playerDefenseRaw := player.Helmet.Defense + player.Chestplate.Defense + player.Boots.Defense + structures.GetSetBonusDefense(player.Entity)
-	mobDefenseRaw := mob.Helmet.Defense + mob.Chestplate.Defense + mob.Boots.Defense + structures.GetSetBonusDefense(mob.Entity)
-
-	// Convert to display percentage (defense * 2, capped at 85%)
-	playerDefensePercent := playerDefenseRaw * 2
-	if playerDefensePercent > 85 {
-		playerDefensePercent = 85
-	}
-	mobDefensePercent := mobDefenseRaw * 2
-	if mobDefensePercent > 85 {
-		mobDefensePercent = 85
-	}
-
-	playerBox := makePlayerBox(player.Entity.Name, player.HP, player.MaxHP, player.Level, player.Mana, playerDefensePercent, player.Weapon.Name)
-	mobBox := makeEnemyBox(mob.Entity.Name, mob.HP, mob.MaxHP, mob.Level, mobDefensePercent, mob.Weapon.Name)
+	playerBox := makeBox(player.Entity.Name, player.HP, player.MaxHP, player.Level, player.Weapon.Name)
+	mobBox := makeBox(mob.Entity.Name, mob.HP, mob.MaxHP, mob.Level, mob.Weapon.Name)
 
 	padding := strings.Repeat(" ", leftPadding)
 
