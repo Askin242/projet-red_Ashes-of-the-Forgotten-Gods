@@ -108,23 +108,21 @@ func computeRequirements(entry craftEntry) (minutes int, materials map[string]in
 
 func computeWeaponReq(w structures.Weapon) (int, map[string]int) {
 	rarity := rarityFromWeaponDamage(w.Damage)
-	mats := map[string]int{}
+	_, mats := structures.CraftingRulesForWeapon(w)
+
+	var goldCost int
 	switch rarity {
 	case 4:
-		mats["OrcTusk"] = 3
-		mats["SkeletonBone"] = 2
-		return 10, mats
+		goldCost = 10
 	case 3:
-		mats["SkeletonBone"] = 2
-		mats["GoblinEar"] = 1
-		return 7, mats
+		goldCost = 7
 	case 2:
-		mats["GoblinEar"] = 2
-		return 5, mats
+		goldCost = 5
 	default:
-		mats["GoblinEar"] = 1
-		return 3, mats
+		goldCost = 3
 	}
+
+	return goldCost, mats
 }
 
 func computeArmorReq(a structures.Armors) (int, map[string]int, int) {
