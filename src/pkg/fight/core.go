@@ -5,7 +5,6 @@ import (
 	"fmt"
 	structures "main/pkg/structures"
 	ui "main/pkg/ui"
-	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -132,9 +131,11 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 		fmt.Printf("\n%s has defeated %s!\n", character.Entity.Name, enemy.Entity.Name)
 		loot := structures.GenerateLootFromEnemy(enemy.EnemyRace)
 		character.AddItem(loot)
-		droppedMoney := rand.Intn(5) + 1
+		droppedMoney := structures.GetRNG().Intn(5) + 1
 		character.Money += droppedMoney
 		fmt.Printf("%s found a %s, aswell as %d coins!\n", character.Entity.Name, loot.GetItem().Name, droppedMoney)
+
+		structures.RefreshSeedState()
 	} else {
 		fmt.Printf("\n%s has been defeated by %s!\n", character.Entity.Name, enemy.Entity.Name)
 	}

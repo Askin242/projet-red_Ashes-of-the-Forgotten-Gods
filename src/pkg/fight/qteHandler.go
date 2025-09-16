@@ -2,7 +2,7 @@ package fight
 
 import (
 	"fmt"
-	"math/rand"
+	"main/pkg/structures"
 	"os"
 	"time"
 
@@ -14,7 +14,7 @@ func QuickTimeEvent(speed time.Duration, length int) float64 {
 		length = 5
 	}
 
-	xPos := rand.Intn(length)
+	xPos := structures.GetRNG().Intn(length)
 	oPos := 0
 	direction := 1
 

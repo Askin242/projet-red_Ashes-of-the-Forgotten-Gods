@@ -3,7 +3,10 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"main/pkg/save"
+	"main/pkg/structures"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/awesome-gocui/gocui"
@@ -70,13 +73,29 @@ func checkInput(g *gocui.Gui) {
 }
 
 func generateRandomSeed() string {
-	rand.Seed(time.Now().UnixNano())
+	tempRNG := rand.New(rand.NewSource(time.Now().UnixNano()))
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	result := make([]byte, 10)
 	for i := range result {
-		result[i] = charset[rand.Intn(len(charset))]
+		result[i] = charset[tempRNG.Intn(len(charset))]
 	}
 	return string(result)
+}
+
+func SaveGameState() error {
+	if !structures.IsSeeded() {
+		return nil
+	}
+
+	structures.RefreshSeedState()
+	gameConfig := save.GameConfig{
+		Username:    username,
+		Race:        race,
+		Seed:        seed,
+		CurrentSeed: structures.GetCurrentSeedState(),
+	}
+
+	return save.SaveGameConfig(gameConfig)
 }
 
 func layout(g *gocui.Gui) error {
@@ -249,12 +268,332 @@ func showDialog(g *gocui.Gui, title, message string) error {
 	})
 }
 
+var (
+	loadSaves    []save.SaveInfo
+	selectedSave int
+)
+
+func showLoadDialog(g *gocui.Gui) error {
+	dialog = true
+	selectedSave = 0
+
+	saves, err := save.GetAvailableSaves()
+	if err != nil {
+		return showDialog(g, " Error ", "Failed to load saves: "+err.Error())
+	}
+
+	loadSaves = saves
+
+	if len(loadSaves) == 0 {
+		return showDialog(g, " No Saves ", "No saved games found.")
+	}
+
+	maxX, maxY := g.Size()
+	dialogWidth := 60
+	dialogHeight := min(18, len(loadSaves)+10)
+	dialogX := (maxX - dialogWidth) / 2
+	dialogY := (maxY - dialogHeight) / 2
+
+	if v, err := g.SetView("load_dialog", dialogX, dialogY, dialogX+dialogWidth, dialogY+dialogHeight, 0); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+		v.Frame = true
+		v.Title = " Load Game "
+		fmt.Fprintln(v, "\nSelect a save to load:")
+		fmt.Fprintln(v, "")
+
+		for i, saveInfo := range loadSaves {
+			if i == selectedSave {
+				fmt.Fprintf(v, "\033[7m[%d] %s (%s) - Seed: %s\033[0m\n",
+					i+1, saveInfo.Username, saveInfo.Race, saveInfo.Seed)
+			} else {
+				fmt.Fprintf(v, "[%d] %s (%s) - Seed: %s\n",
+					i+1, saveInfo.Username, saveInfo.Race, saveInfo.Seed)
+			}
+		}
+
+		fmt.Fprintln(v, "")
+		fmt.Fprintln(v, "Use ↑↓ arrows to select")
+	}
+
+	buttonY := dialogY + dialogHeight - 4
+	createButton(g, "load_confirm_button", " Load ", dialogX+15, buttonY, 10, 2, "load_confirm_button")
+	createButton(g, "load_cancel_button", " Cancel ", dialogX+35, buttonY, 10, 2, "load_cancel_button")
+
+	g.SetKeybinding("load_dialog", gocui.KeyArrowUp, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		if selectedSave > 0 {
+			selectedSave--
+			refreshLoadDialog(g)
+		}
+		return nil
+	})
+
+	g.SetKeybinding("load_dialog", gocui.KeyArrowDown, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		if selectedSave < len(loadSaves)-1 {
+			selectedSave++
+			refreshLoadDialog(g)
+		}
+		return nil
+	})
+
+	g.SetKeybinding("load_dialog", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return confirmLoad(g)
+	})
+
+	g.SetKeybinding("load_confirm_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return confirmLoad(g)
+	})
+
+	g.SetKeybinding("load_cancel_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return cancelLoad(g)
+	})
+
+	g.SetCurrentView("load_dialog")
+	return nil
+}
+
+func refreshLoadDialog(g *gocui.Gui) {
+	v, _ := g.View("load_dialog")
+	if v != nil {
+		v.Clear()
+		fmt.Fprintln(v, "\nSelect a save to load:")
+		fmt.Fprintln(v, "")
+
+		for i, saveInfo := range loadSaves {
+			if i == selectedSave {
+				fmt.Fprintf(v, "\033[7m[%d] %s (%s) - Seed: %s\033[0m\n",
+					i+1, saveInfo.Username, saveInfo.Race, saveInfo.Seed)
+			} else {
+				fmt.Fprintf(v, "[%d] %s (%s) - Seed: %s\n",
+					i+1, saveInfo.Username, saveInfo.Race, saveInfo.Seed)
+			}
+		}
+
+		fmt.Fprintln(v, "")
+		fmt.Fprintln(v, "Use ↑↓ arrows to select")
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func confirmLoad(g *gocui.Gui) error {
+	if selectedSave < 0 || selectedSave >= len(loadSaves) {
+		return nil
+	}
+
+	selectedSaveInfo := loadSaves[selectedSave]
+
+	save.SetSaveID(selectedSaveInfo.Username)
+	config, err := save.LoadGameConfig()
+	if err != nil {
+		return showDialog(g, " Error ", "Failed to load save: "+err.Error())
+	}
+
+	username = config.Username
+	race = config.Race
+	seed = config.Seed
+
+	if seed != "" {
+		if config.CurrentSeed != 0 {
+			// Load from saved RNG state
+			structures.InitializeFromCurrentSeed(seed, config.CurrentSeed)
+		} else {
+			// Fallback for old saves without CurrentSeed
+			structures.InitializeSeed(seed)
+		}
+	}
+
+	for i, r := range races {
+		if r == race {
+			raceIndex = i
+			break
+		}
+	}
+
+	return showLoadSuccess(g, config)
+}
+
+func showLoadSuccess(g *gocui.Gui, config save.GameConfig) error {
+	views := []string{"load_dialog", "load_confirm_button", "load_cancel_button"}
+	for _, viewName := range views {
+		g.DeleteView(viewName)
+	}
+
+	maxX, maxY := g.Size()
+	msgWidth := 50
+	msgHeight := 12
+	msgX := (maxX - msgWidth) / 2
+	msgY := (maxY - msgHeight) / 2
+
+	if v, err := g.SetView("loaded", msgX, msgY, msgX+msgWidth, msgY+msgHeight, 0); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+		v.Frame = true
+		v.Title = " Game Loaded "
+		fmt.Fprintln(v, "\n[Game Loaded Successfully]")
+		fmt.Fprintf(v, "Username: %s\n", config.Username)
+		fmt.Fprintf(v, "Race: %s\n", config.Race)
+		fmt.Fprintf(v, "Seed: %s\n", config.Seed)
+		fmt.Fprintf(v, "Loaded from: saves/%s/\n", config.Username)
+		fmt.Fprintln(v, "")
+	}
+
+	buttonY := msgY + msgHeight - 2
+	buttonX := msgX + msgWidth - 14
+	createButton(g, "loaded_go_back_button", " Go Back ", buttonX, buttonY-1, 12, 2, "loaded_go_back_button")
+
+	g.SetKeybinding("loaded_go_back_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		g.DeleteView("loaded")
+		g.DeleteView("loaded_go_back_button")
+		dialog = false
+		return nil
+	})
+
+	return nil
+}
+
+func cancelLoad(g *gocui.Gui) error {
+	views := []string{"load_dialog", "load_confirm_button", "load_cancel_button"}
+	for _, viewName := range views {
+		g.DeleteView(viewName)
+	}
+	dialog = false
+	return nil
+}
+
 func loadGameFile(g *gocui.Gui, v *gocui.View) error {
-	return showDialog(g, " Load Game ", "Loading game file...")
+	return showLoadDialog(g)
 }
 
 func eraseGameFile(g *gocui.Gui, v *gocui.View) error {
-	return showDialog(g, " Erase File ", "Erasing game file...")
+	return showEraseDialog(g)
+}
+
+var selectedErase int
+
+func showEraseDialog(g *gocui.Gui) error {
+	dialog = true
+	selectedErase = 0
+
+	saves, err := save.GetAvailableSaves()
+	if err != nil {
+		return showDialog(g, " Error ", "Failed to load saves: "+err.Error())
+	}
+
+	if len(saves) == 0 {
+		return showDialog(g, " No Saves ", "No saved games to erase.")
+	}
+
+	loadSaves = saves
+	maxX, maxY := g.Size()
+	dialogWidth := 60
+	dialogHeight := min(18, len(saves)+10)
+	dialogX := (maxX - dialogWidth) / 2
+	dialogY := (maxY - dialogHeight) / 2
+
+	if v, err := g.SetView("erase_dialog", dialogX, dialogY, dialogX+dialogWidth, dialogY+dialogHeight, 0); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+		v.Frame = true
+		v.Title = " Erase Game "
+		refreshEraseDialog(g)
+	}
+
+	buttonY := dialogY + dialogHeight - 3
+	createButton(g, "erase_confirm_button", " ERASE ", dialogX+15, buttonY, 10, 2, "erase_confirm_button")
+	createButton(g, "erase_cancel_button", " Cancel ", dialogX+35, buttonY, 10, 2, "erase_cancel_button")
+
+	g.SetKeybinding("erase_dialog", gocui.KeyArrowUp, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		if selectedErase > 0 {
+			selectedErase--
+			refreshEraseDialog(g)
+		}
+		return nil
+	})
+
+	g.SetKeybinding("erase_dialog", gocui.KeyArrowDown, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		if selectedErase < len(loadSaves)-1 {
+			selectedErase++
+			refreshEraseDialog(g)
+		}
+		return nil
+	})
+
+	g.SetKeybinding("erase_confirm_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return confirmErase(g)
+	})
+
+	g.SetKeybinding("erase_cancel_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return cancelErase(g)
+	})
+
+	g.SetKeybinding("erase_dialog", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return confirmErase(g)
+	})
+
+	g.SetCurrentView("erase_dialog")
+	return nil
+}
+
+func refreshEraseDialog(g *gocui.Gui) {
+	v, _ := g.View("erase_dialog")
+	if v != nil {
+		v.Clear()
+		fmt.Fprintln(v, "\n\033[31mWARNING: This will permanently delete the save!\033[0m")
+		fmt.Fprintln(v, "Select a save to erase:")
+		fmt.Fprintln(v, "")
+
+		for i, saveInfo := range loadSaves {
+			if i == selectedErase {
+				fmt.Fprintf(v, "\033[7m[%d] %s (%s) - Seed: %s\033[0m\n",
+					i+1, saveInfo.Username, saveInfo.Race, saveInfo.Seed)
+			} else {
+				fmt.Fprintf(v, "[%d] %s (%s) - Seed: %s\n",
+					i+1, saveInfo.Username, saveInfo.Race, saveInfo.Seed)
+			}
+		}
+
+		fmt.Fprintln(v, "")
+		fmt.Fprintln(v, "Use ↑↓ arrows to select")
+	}
+}
+
+func confirmErase(g *gocui.Gui) error {
+	if selectedErase < 0 || selectedErase >= len(loadSaves) {
+		return nil
+	}
+
+	selectedSaveInfo := loadSaves[selectedErase]
+
+	savePath := "saves/" + selectedSaveInfo.Username
+	err := os.RemoveAll(savePath)
+	if err != nil {
+		return showDialog(g, " Error ", "Failed to erase save: "+err.Error())
+	}
+
+	views := []string{"erase_dialog", "erase_confirm_button", "erase_cancel_button"}
+	for _, viewName := range views {
+		g.DeleteView(viewName)
+	}
+
+	return showDialog(g, " Success ", "Save '"+selectedSaveInfo.Username+"' has been erased.")
+}
+
+func cancelErase(g *gocui.Gui) error {
+	views := []string{"erase_dialog", "erase_confirm_button", "erase_cancel_button"}
+	for _, viewName := range views {
+		g.DeleteView(viewName)
+	}
+	dialog = false
+	return nil
 }
 
 func saveForm(g *gocui.Gui) error {
@@ -264,14 +603,40 @@ func saveForm(g *gocui.Gui) error {
 	}
 
 	v, _ := g.View("username")
+	usernameToCheck := v.Buffer()
+	if save.SaveExists(usernameToCheck) {
+		errMsg = "Username already exists! Choose a different one."
+		return nil
+	}
+
+	v, _ = g.View("username")
 	username = v.Buffer()
 	v, _ = g.View("seed")
 	seed = v.Buffer()
 	race = races[raceIndex]
 
+	if seed == "" {
+		seed = generateRandomSeed()
+	}
+	structures.InitializeSeed(seed)
+
+	save.SetSaveID(username)
+	gameConfig := save.GameConfig{
+		Username:    username,
+		Race:        race,
+		Seed:        seed,
+		CurrentSeed: structures.GetCurrentSeedState(),
+	}
+
+	err := save.SaveGameConfig(gameConfig)
+	if err != nil {
+		errMsg = "Failed to save game: " + err.Error()
+		return nil
+	}
+
 	maxX, maxY := g.Size()
 	msgWidth := 50
-	msgHeight := 10
+	msgHeight := 12
 	msgX := (maxX - msgWidth) / 2
 	msgY := (maxY - msgHeight) / 2
 
@@ -281,10 +646,11 @@ func saveForm(g *gocui.Gui) error {
 		}
 		v.Frame = true
 		v.Title = " Game Saved "
-		fmt.Fprintln(v, "\n[Game Data Saved]")
+		fmt.Fprintln(v, "\n[Game Data Saved Successfully]")
 		fmt.Fprintf(v, "Username: %s\n", username)
 		fmt.Fprintf(v, "Race: %s\n", race)
 		fmt.Fprintf(v, "Seed: %s\n", seed)
+		fmt.Fprintf(v, "Saved to: saves/%s/\n", username)
 		fmt.Fprintln(v, "")
 	}
 
@@ -297,8 +663,9 @@ func saveForm(g *gocui.Gui) error {
 
 func cancelForm(g *gocui.Gui) error {
 	inForm = false
+	dialog = false
 	errMsg = ""
-	views := []string{"form", "username_label", "username", "race_label", "race", "seed_label", "seed", "generate_seed_button", "save_button", "cancel_button", "form_instructions", "error_message", "saved", "saved_go_back_button"}
+	views := []string{"form", "username_label", "username", "race_label", "race", "seed_label", "seed", "generate_seed_button", "save_button", "cancel_button", "form_instructions", "error_message", "saved", "saved_go_back_button", "load_dialog", "load_confirm_button", "load_cancel_button", "loaded", "loaded_go_back_button", "erase_dialog", "erase_confirm_button", "erase_cancel_button"}
 	for _, v := range views {
 		g.DeleteView(v)
 	}
@@ -411,7 +778,7 @@ func updateHoverEffects(g *gocui.Gui) {
 		}
 	} else {
 		newHoveredButton := ""
-		buttonNames := []string{"generate_seed_button", "save_button", "cancel_button", "saved_go_back_button", "main_dialog_btn"}
+		buttonNames := []string{"generate_seed_button", "save_button", "cancel_button", "saved_go_back_button", "main_dialog_btn", "load_confirm_button", "load_cancel_button", "loaded_go_back_button", "erase_confirm_button", "erase_cancel_button"}
 
 		for _, btnName := range buttonNames {
 			if isMouseOver(g, btnName, mx, my) {
@@ -484,9 +851,49 @@ func handleMouseClick(g *gocui.Gui, v *gocui.View) error {
 				g.DeleteView("saved_go_back_button")
 				return cancelForm(g)
 			}, func() { hovered = "" }},
+			{"load_confirm_button", func(g *gocui.Gui, v *gocui.View) error { return confirmLoad(g) }, func() { hovered = "" }},
+			{"load_cancel_button", func(g *gocui.Gui, v *gocui.View) error { return cancelLoad(g) }, func() { hovered = "" }},
+			{"loaded_go_back_button", func(g *gocui.Gui, v *gocui.View) error {
+				g.DeleteView("loaded")
+				g.DeleteView("loaded_go_back_button")
+				dialog = false
+				return nil
+			}, func() { hovered = "" }},
+			{"erase_confirm_button", func(g *gocui.Gui, v *gocui.View) error { return confirmErase(g) }, func() { hovered = "" }},
+			{"erase_cancel_button", func(g *gocui.Gui, v *gocui.View) error { return cancelErase(g) }, func() { hovered = "" }},
 		}
 		if err := HandleMouseClickButtonsWithHover(g, mx, my, buttons); err != nil {
 			return err
+		}
+
+		loadView, _ := g.View("load_dialog")
+		if loadView != nil && len(loadSaves) > 0 {
+			x0, y0, x1, y1 := loadView.Dimensions()
+			if mx >= x0 && mx <= x1 && my >= y0 && my <= y1 {
+				saveLineStart := y0 + 3
+				if my >= saveLineStart && my < saveLineStart+len(loadSaves) {
+					clickedSave := my - saveLineStart
+					if clickedSave >= 0 && clickedSave < len(loadSaves) {
+						selectedSave = clickedSave
+						refreshLoadDialog(g)
+					}
+				}
+			}
+		}
+
+		eraseView, _ := g.View("erase_dialog")
+		if eraseView != nil && len(loadSaves) > 0 {
+			x0, y0, x1, y1 := eraseView.Dimensions()
+			if mx >= x0 && mx <= x1 && my >= y0 && my <= y1 {
+				saveLineStart := y0 + 4
+				if my >= saveLineStart && my < saveLineStart+len(loadSaves) {
+					clickedSave := my - saveLineStart
+					if clickedSave >= 0 && clickedSave < len(loadSaves) {
+						selectedErase = clickedSave
+						refreshEraseDialog(g)
+					}
+				}
+			}
 		}
 	}
 

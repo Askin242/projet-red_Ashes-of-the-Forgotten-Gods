@@ -1,9 +1,5 @@
 package structures
 
-import (
-	"math/rand"
-)
-
 type Armors struct {
 	Name    string
 	Type    string
@@ -69,14 +65,16 @@ func getWeightedRandomName() string { // Get random armor name based on rarity
 	if total <= 0 {
 		return "VoidWalker"
 	}
-	r := rand.Intn(total)
+	r := GetRNG().Intn(total)
 	cumulative := 0
 	for name, w := range armorRarityWeight {
 		cumulative += w
 		if r < cumulative {
+			RefreshSeedState()
 			return name
 		}
 	}
+	RefreshSeedState()
 	return "VoidWalker"
 }
 
