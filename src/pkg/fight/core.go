@@ -52,7 +52,7 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 	speed := 150 * time.Millisecond
 
 	time.Sleep(4 * time.Second)
-	ui.CallClear()
+	ui.ClearScreen()
 
 	for character.Alive && enemy.Entity.Alive {
 		roundNumber++
@@ -78,7 +78,7 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 						character.Entity.Name, damage, enemy.Entity.Name)
 					chosen = true
 					time.Sleep(2 * time.Second)
-					ui.CallClear()
+					ui.ClearScreen()
 
 				case "2":
 					for i, spell := range character.Spells {
@@ -106,7 +106,7 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 							character.Entity.Name, chosenSpell.Name, damage, enemy.Entity.Name)
 						chosen = true
 						time.Sleep(2 * time.Second)
-						ui.CallClear()
+						ui.ClearScreen()
 					} else {
 						fmt.Println("Invalid spell choice.")
 						RenderFight(character, enemy, playerTurn, roundNumber)
