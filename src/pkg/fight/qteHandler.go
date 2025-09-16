@@ -2,7 +2,6 @@ package fight
 
 import (
 	"fmt"
-	"main/pkg/structures"
 	"os"
 	"time"
 
@@ -14,7 +13,7 @@ func QuickTimeEvent(speed time.Duration, length int) float64 {
 		length = 5
 	}
 
-	xPos := structures.GetRNG().Intn(length)
+	xPos := length / 2
 	oPos := 0
 	direction := 1
 
@@ -40,7 +39,7 @@ func QuickTimeEvent(speed time.Duration, length int) float64 {
 				fmt.Print("-")
 			}
 		}
-		fmt.Print("  (Press SPACE to stop)")
+		fmt.Print("  (Press SPACE when 'o' is on 'x' to block! Green zone = good block)")
 	}
 
 	render()
