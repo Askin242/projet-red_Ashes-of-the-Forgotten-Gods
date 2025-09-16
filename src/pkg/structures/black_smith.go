@@ -76,6 +76,23 @@ type CraftingBlacksmith struct {
 	Current *CraftJob
 }
 
+func InitCraftingBlacksmith() CraftingBlacksmith {
+	return CraftingBlacksmith{
+		BlackSmith: BlackSmith{
+			Entity: Entity{
+				HP:    100,
+				MaxHP: 100,
+				Name:  "Blacksmith",
+				Alive: true,
+				Level: 5,
+			},
+			Inventory:       Inventory{},
+			FirstHealBought: false,
+		},
+		Current: nil,
+	}
+}
+
 func (cb *CraftingBlacksmith) RequestCraftWeapon(player *Player, weaponName string) bool {
 	if cb.Current != nil {
 		return false
