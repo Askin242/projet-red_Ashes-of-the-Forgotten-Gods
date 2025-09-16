@@ -22,7 +22,7 @@ type CraftJob struct {
 	Materials map[string]int
 }
 
-func craftingRulesForWeapon(w Weapon) (minutes int, mats map[string]int) {
+func CraftingRulesForWeapon(w Weapon) (minutes int, mats map[string]int) {
 	rarity := rarityFromWeaponDamage(w.Damage)
 	mats = map[string]int{}
 	switch rarity {
@@ -87,7 +87,7 @@ func (cb *CraftingBlacksmith) RequestCraftWeapon(player *Player, weaponName stri
 	if player.Money < 5 {
 		return false
 	}
-	minutes, mats := craftingRulesForWeapon(w)
+	minutes, mats := CraftingRulesForWeapon(w)
 	if !player.HasMaterialsBatch(mats) {
 		return false
 	}
