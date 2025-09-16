@@ -3,6 +3,8 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -65,6 +67,16 @@ func checkInput(g *gocui.Gui) {
 		errMsg = "Seed is too long, max 10 characters"
 		return
 	}
+}
+
+func generateRandomSeed() string {
+	rand.Seed(time.Now().UnixNano())
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	result := make([]byte, 10)
+	for i := range result {
+		result[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(result)
 }
 
 func layout(g *gocui.Gui) error {
@@ -161,7 +173,25 @@ func layout(g *gocui.Gui) error {
 		CreateFormField(g, "race_label", "race", "Race:", formX+2, labelY, formX+formWidth-2, labelY+2, false, username, seed, races, raceIndex)
 
 		labelY += 3
-		CreateFormField(g, "seed_label", "seed", "Seed:", formX+2, labelY, formX+formWidth-2, labelY+2, true, username, seed, races, raceIndex)
+		if v, err := g.SetView("seed_label", formX+2, labelY, formX+12, labelY+2, 0); err != nil {
+			if !errors.Is(err, gocui.ErrUnknownView) {
+				return err
+			}
+			v.Frame = false
+			fmt.Fprint(v, "Seed:")
+		}
+
+		if v, err := g.SetView("seed", formX+13, labelY, formX+33, labelY+2, 0); err != nil {
+			if !errors.Is(err, gocui.ErrUnknownView) {
+				return err
+			}
+			v.Frame = true
+			v.Editable = true
+			v.Wrap = false
+			fmt.Fprint(v, seed)
+		}
+
+		createButton(g, "generate_seed_button", " Random ", formX+35, labelY, 10, 2, "generate_seed_button")
 
 		buttonY := formY + formHeight - 5
 		createButton(g, "save_button", " Save ", formX+15, buttonY-1, 10, 2, "save_button")
@@ -268,7 +298,7 @@ func saveForm(g *gocui.Gui) error {
 func cancelForm(g *gocui.Gui) error {
 	inForm = false
 	errMsg = ""
-	views := []string{"form", "username_label", "username", "race_label", "race", "seed_label", "seed", "save_button", "cancel_button", "form_instructions", "error_message", "saved", "saved_go_back_button"}
+	views := []string{"form", "username_label", "username", "race_label", "race", "seed_label", "seed", "generate_seed_button", "save_button", "cancel_button", "form_instructions", "error_message", "saved", "saved_go_back_button"}
 	for _, v := range views {
 		g.DeleteView(v)
 	}
@@ -349,6 +379,16 @@ func keybindings(g *gocui.Gui) error {
 		return cancelForm(g)
 	})
 
+	g.SetKeybinding("generate_seed_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		randomSeed := generateRandomSeed()
+		seedView, _ := g.View("seed")
+		if seedView != nil {
+			seedView.Clear()
+			fmt.Fprint(seedView, randomSeed)
+		}
+		return nil
+	})
+
 	EnableMouseAndSetHandler(g, handleMouseClick)
 	return nil
 }
@@ -371,7 +411,7 @@ func updateHoverEffects(g *gocui.Gui) {
 		}
 	} else {
 		newHoveredButton := ""
-		buttonNames := []string{"save_button", "cancel_button", "saved_go_back_button", "main_dialog_btn"}
+		buttonNames := []string{"generate_seed_button", "save_button", "cancel_button", "saved_go_back_button", "main_dialog_btn"}
 
 		for _, btnName := range buttonNames {
 			if isMouseOver(g, btnName, mx, my) {
@@ -428,6 +468,15 @@ func handleMouseClick(g *gocui.Gui, v *gocui.View) error {
 		}
 
 		buttons := []ButtonHandlerWithHover{
+			{"generate_seed_button", func(g *gocui.Gui, v *gocui.View) error {
+				randomSeed := generateRandomSeed()
+				seedView, _ := g.View("seed")
+				if seedView != nil {
+					seedView.Clear()
+					fmt.Fprint(seedView, randomSeed)
+				}
+				return nil
+			}, func() { hovered = "" }},
 			{"save_button", func(g *gocui.Gui, v *gocui.View) error { return saveForm(g) }, func() { hovered = "" }},
 			{"cancel_button", func(g *gocui.Gui, v *gocui.View) error { return cancelForm(g) }, func() { hovered = "" }},
 			{"saved_go_back_button", func(g *gocui.Gui, v *gocui.View) error {
