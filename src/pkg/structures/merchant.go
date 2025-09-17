@@ -55,7 +55,7 @@ func (m *Merchant) Refill() {
 		m.Inventory = append(m.Inventory, GetPotion("Heal", 1, 0))
 	}
 
-	for range "123" {
+	for range "123456" { // 6 items per refill + potion
 		m.Inventory = append(m.Inventory, GetRandomItemByRarity())
 	}
 	save.SaveAny("merchant", m)

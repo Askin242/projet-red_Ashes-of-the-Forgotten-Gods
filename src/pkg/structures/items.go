@@ -36,8 +36,10 @@ type Material struct {
 func (m Material) GetItem() Item { return m.Item }
 
 func NewMaterial(key string, displayName string) Material {
+	rng := GetRNG()
+	price := 3 + rng.Intn(18) // 3 + (0-17) = 3-20
 	return Material{
-		Item: NewItem(displayName, 0, 0, 0),
+		Item: NewItem(displayName, 0, price, 1), // Set rarity to 1 for materials
 		Key:  key,
 	}
 }
@@ -147,6 +149,10 @@ func GetRandomItemByRarity() InventoryEntry { // Chatgpt based ♥
 
 	for _, sb := range AllSpellbooks {
 		pool = append(pool, weightedEntry{entry: sb, weight: weightFromRarity(sb.Item.Rarity)})
+	}
+
+	for _, m := range AllMaterials {
+		pool = append(pool, weightedEntry{entry: m, weight: weightFromRarity(m.Item.Rarity)})
 	}
 
 	for _, w := range AllWeapons {
