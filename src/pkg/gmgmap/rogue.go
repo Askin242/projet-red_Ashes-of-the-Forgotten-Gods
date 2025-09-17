@@ -189,38 +189,65 @@ func NewRogue(rr *rand.Rand, width, height,
 	}
 
 	// Find door tiles: those with 2 neighbour walls and 1 each of corridor/room
+	doorPlaced := make([][]bool, m.Width)
+	for i := range doorPlaced {
+		doorPlaced[i] = make([]bool, m.Height)
+	}
+
 	for y := 0; y < m.Height; y++ {
-		for x := 0; x < m.Width; x++ {
-			if IsWall(s.getTile(x, y)) {
+		for x := 0; x < m.Width-1; x++ { // -1 because we check x+1 for 2-wide doors
+			if IsWall(s.getTile(x, y)) || IsWall(s.getTile(x+1, y)) {
 				continue
 			}
-			walls, corridors, rooms := 0, 0, 0
-			var countTile = func(x, y int) {
-				if IsWall(s.getTile(x, y)) {
-					walls++
-				} else {
-					switch g.getTile(x, y) {
-					case room:
-						rooms++
-					case room2:
-						corridors++
+			if doorPlaced[x][y] || doorPlaced[x+1][y] {
+				continue
+			}
+
+			canBeDoor := true
+			for dx := 0; dx < 2; dx++ {
+				walls, corridors, rooms := 0, 0, 0
+				var countTile = func(checkX, checkY int) {
+					if checkX < 0 || checkX >= m.Width || checkY < 0 || checkY >= m.Height {
+						walls++
+						return
+					}
+					if IsWall(s.getTile(checkX, checkY)) {
+						walls++
+					} else {
+						switch g.getTile(checkX, checkY) {
+						case room:
+							rooms++
+						case room2:
+							corridors++
+						}
 					}
 				}
+
+				currentX := x + dx
+				if y > 0 {
+					countTile(currentX, y-1)
+				}
+				if currentX < m.Width-1 {
+					countTile(currentX+1, y)
+				}
+				if y < m.Height-1 {
+					countTile(currentX, y+1)
+				}
+				if currentX > 0 {
+					countTile(currentX-1, y)
+				}
+
+				if !(walls == 2 && corridors == 1 && rooms == 1) {
+					canBeDoor = false
+					break
+				}
 			}
-			if y > 0 {
-				countTile(x, y-1)
-			}
-			if x < m.Width-1 {
-				countTile(x+1, y)
-			}
-			if y < m.Height-1 {
-				countTile(x, y+1)
-			}
-			if x > 0 {
-				countTile(x-1, y)
-			}
-			if walls == 2 && corridors == 1 && rooms == 1 {
+
+			if canBeDoor {
 				s.setTile(x, y, door)
+				s.setTile(x+1, y, door)
+				doorPlaced[x][y] = true
+				doorPlaced[x+1][y] = true
 			}
 		}
 	}

@@ -43,14 +43,16 @@ func NewShop(rr *rand.Rand, exportFunc func(*Map), width, height int) *Map {
 	// Leave one row along bottom as buffer for lawn/board
 	s.rectangle(rect{1, 1, g.Width - 2, g.Height - 3}, wall, false)
 	exportFunc(m)
-	// Entrance - connect with road/floor, replace wall with door, add sign
 	entranceX := m.Width / 2
 	g.setTile(entranceX, g.Height-2, road)
 	g.setTile(entranceX, g.Height-3, room)
+	g.setTile(entranceX+1, g.Height-2, road)
+	g.setTile(entranceX+1, g.Height-3, room)
 	exportFunc(m)
 	doorY := s.Height - 3
 	s.setTile(entranceX, doorY, door)
-	s.setTile(entranceX+1, s.Height-2, sign)
+	s.setTile(entranceX+1, doorY, door)
+	s.setTile(entranceX+2, s.Height-2, sign)
 	exportFunc(m)
 
 	f := m.Layer("Furniture")

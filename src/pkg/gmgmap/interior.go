@@ -140,8 +140,6 @@ func NewInterior(rr *rand.Rand, width, height, minRoomSize, maxRoomSize,
 			if !r.IsAdjacent(rOther, overlapSize) {
 				continue
 			}
-			// Rooms are adjacent; pick the cell that's in the middle of the
-			// adjacent area and turn into a door
 			minOverlapX := imin(
 				room.r.x+room.r.w, roomOther.r.x+roomOther.r.w)
 			maxOverlapX := imax(room.r.x, roomOther.r.x)
@@ -150,8 +148,31 @@ func NewInterior(rr *rand.Rand, width, height, minRoomSize, maxRoomSize,
 			maxOverlapY := imax(room.r.y, roomOther.r.y)
 			overlapX := (minOverlapX + maxOverlapX) / 2
 			overlapY := (minOverlapY + maxOverlapY) / 2
-			g.setTile(overlapX, overlapY, room2)
-			s.setTile(overlapX, overlapY, door)
+
+			// Create 2-wide door for player passage
+			if minOverlapX != maxOverlapX { // Horizontal door
+				if overlapX+1 < minOverlapX {
+					g.setTile(overlapX, overlapY, room2)
+					s.setTile(overlapX, overlapY, door)
+					g.setTile(overlapX+1, overlapY, room2)
+					s.setTile(overlapX+1, overlapY, door)
+				} else {
+					// Fallback to single door if not enough space
+					g.setTile(overlapX, overlapY, room2)
+					s.setTile(overlapX, overlapY, door)
+				}
+			} else { // Vertical door
+				if overlapY+1 < minOverlapY {
+					g.setTile(overlapX, overlapY, room2)
+					s.setTile(overlapX, overlapY, door)
+					g.setTile(overlapX, overlapY+1, room2)
+					s.setTile(overlapX, overlapY+1, door)
+				} else {
+					// Fallback to single door if not enough space
+					g.setTile(overlapX, overlapY, room2)
+					s.setTile(overlapX, overlapY, door)
+				}
+			}
 			break
 		}
 	}

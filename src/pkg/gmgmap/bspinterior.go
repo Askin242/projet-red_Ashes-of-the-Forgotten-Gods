@@ -169,40 +169,46 @@ func NewBSPInterior(rr *rand.Rand, exportFunc func(*Map), width, height, splits,
 
 			// Check if room is adjacent to street and create opening
 			if (r.x+r.w == streetR.x) || (streetR.x+streetR.w == r.x) {
-				// Vertical opening
 				overlapY := imax(r.y, streetR.y)
 				overlapEndY := imin(r.y+r.h, streetR.y+streetR.h)
-				if overlapEndY > overlapY {
+				if overlapEndY-overlapY >= 2 { // Need at least 2 tiles of overlap for 2-wide door
 					openY := overlapY + (overlapEndY-overlapY)/2
-					if r.x+r.w == streetR.x {
-						// Opening on right side of room
-						s.setTile(r.x+r.w-1, openY, nothing)
-						g.setTile(r.x+r.w-1, openY, room2)
-					} else {
-						// Opening on left side of room
-						s.setTile(r.x, openY, nothing)
-						g.setTile(r.x, openY, room2)
+					if openY+1 < overlapEndY {
+						if r.x+r.w == streetR.x {
+							s.setTile(r.x+r.w-1, openY, nothing)
+							g.setTile(r.x+r.w-1, openY, room2)
+							s.setTile(r.x+r.w-1, openY+1, nothing)
+							g.setTile(r.x+r.w-1, openY+1, room2)
+						} else {
+							s.setTile(r.x, openY, nothing)
+							g.setTile(r.x, openY, room2)
+							s.setTile(r.x, openY+1, nothing)
+							g.setTile(r.x, openY+1, room2)
+						}
+						areas[i].isConnected = true
+						adjacency.Connect(i, j)
 					}
-					areas[i].isConnected = true
-					adjacency.Connect(i, j)
 				}
 			} else if (r.y+r.h == streetR.y) || (streetR.y+streetR.h == r.y) {
-				// Horizontal opening
 				overlapX := imax(r.x, streetR.x)
 				overlapEndX := imin(r.x+r.w, streetR.x+streetR.w)
-				if overlapEndX > overlapX {
+				if overlapEndX-overlapX >= 2 { // Need at least 2 tiles of overlap for 2-wide door
 					openX := overlapX + (overlapEndX-overlapX)/2
-					if r.y+r.h == streetR.y {
-						// Opening on bottom side of room
-						s.setTile(openX, r.y+r.h-1, nothing)
-						g.setTile(openX, r.y+r.h-1, room2)
-					} else {
-						// Opening on top side of room
-						s.setTile(openX, r.y, nothing)
-						g.setTile(openX, r.y, room2)
+					if openX+1 < overlapEndX {
+						if r.y+r.h == streetR.y {
+							s.setTile(openX, r.y+r.h-1, nothing)
+							g.setTile(openX, r.y+r.h-1, room2)
+							s.setTile(openX+1, r.y+r.h-1, nothing)
+							g.setTile(openX+1, r.y+r.h-1, room2)
+						} else {
+							s.setTile(openX, r.y, nothing)
+							g.setTile(openX, r.y, room2)
+							s.setTile(openX+1, r.y, nothing)
+							g.setTile(openX+1, r.y, room2)
+						}
+						areas[i].isConnected = true
+						adjacency.Connect(i, j)
 					}
-					areas[i].isConnected = true
-					adjacency.Connect(i, j)
 				}
 			}
 		}

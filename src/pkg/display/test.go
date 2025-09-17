@@ -113,34 +113,51 @@ func findPlayer(m *gmgmap.Map) (int, int) {
 }
 
 func canMoveTo(m *gmgmap.Map, x, y int) bool {
-	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
+	// Check bounds for both tiles (player is 2 characters wide)
+	if x < 0 || x+1 >= m.Width || y < 0 || y >= m.Height {
 		return false
 	}
 
-	if y > 32 { // else the player can go outsite the view cuz of bottom
+	if y > 32 { // else the player can go outside the view cuz of bottom
 		return false
 	}
 
 	ground := m.Layer("Ground")
 	structures := m.Layer("Structures")
+	entities := m.Layer("Entities")
 
-	groundTile := ground.GetTile(x, y)
-	structureTile := structures.GetTile(x, y)
+	for i := 0; i < 2; i++ {
+		groundTile := ground.GetTile(x+i, y)
+		structureTile := structures.GetTile(x+i, y)
+		entityTile := entities.GetTile(x+i, y)
 
-	validGround := (groundTile == gmgmap.Room || groundTile == gmgmap.Room2 ||
-		groundTile == gmgmap.Floor)
+		validGround := (groundTile == gmgmap.Room || groundTile == gmgmap.Room2 ||
+			groundTile == gmgmap.Floor)
 
-	invalidStructure := (structureTile == gmgmap.Wall || structureTile == gmgmap.Wall2)
+		invalidStructure := (structureTile == gmgmap.Wall || structureTile == gmgmap.Wall2)
 
-	return validGround && !invalidStructure
+		blockedByEntity := entityTile != gmgmap.Nothing &&
+			entityTile != gmgmap.Mob &&
+			entityTile != gmgmap.Merchant &&
+			entityTile != gmgmap.Blacksmith &&
+			entityTile != gmgmap.Player
+
+		if !validGround || invalidStructure || blockedByEntity {
+			return false
+		}
+	}
+
+	return true
 }
 
 func movePlayer(m *gmgmap.Map, oldX, oldY, newX, newY int) {
 	entities := m.Layer("Entities")
 
 	entities.SetTile(oldX, oldY, gmgmap.Nothing)
+	entities.SetTile(oldX+1, oldY, gmgmap.Nothing)
 
 	entities.SetTile(newX, newY, gmgmap.Player)
+	entities.SetTile(newX+1, newY, gmgmap.Player)
 }
 
 type GameState struct {
