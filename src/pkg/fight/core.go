@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	structures "main/pkg/structures"
+
 	ui "main/pkg/ui"
 	"math/rand"
 	"os"
@@ -135,6 +136,7 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 		droppedMoney := rand.Intn(5) + 1
 		character.Money += droppedMoney
 		fmt.Printf("%s found a %s, aswell as %d coins!\n", character.Entity.Name, loot.GetItem().Name, droppedMoney)
+		character.AddXP(character.GetxpFromMob(enemy.Entity))
 	} else {
 		fmt.Printf("\n%s has been defeated by %s!\n", character.Entity.Name, enemy.Entity.Name)
 	}

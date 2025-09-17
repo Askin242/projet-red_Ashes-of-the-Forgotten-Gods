@@ -1,5 +1,7 @@
 package structures
 
+import "math/rand"
+
 type Enemy struct {
 	Entity
 	Weapon
@@ -23,11 +25,12 @@ func InitEnemy(name string, race string) Enemy {
 			MaxHP:      100,
 			Name:       name,
 			Alive:      true,
-			Level:      0,
+			Level:      1,
 			Helmet:     GetRandomArmorByType("Helmet"),
 			Chestplate: GetRandomArmorByType("Chestplate"),
 			Boots:      GetRandomArmorByType("Boots"),
 			Initiative: 0,
+			defaultXP:  rand.Intn(10) + 1,
 		},
 		Weapon:    AllWeapons["Sword"],
 		EnemyRace: AllEnemyRaces[race],

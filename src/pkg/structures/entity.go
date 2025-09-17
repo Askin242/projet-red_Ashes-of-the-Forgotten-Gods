@@ -18,6 +18,7 @@ type Entity struct {
 	Helmet     Armors
 	Chestplate Armors
 	Boots      Armors
+	defaultXP  int
 	Effects    []Effect
 }
 
