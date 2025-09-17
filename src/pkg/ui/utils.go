@@ -154,14 +154,41 @@ func ShowMessageWithOk(g *gocui.Gui, idPrefix, title, message string, width, hei
 	btnY := y + height - 2
 	createButton(g, okId, " OK ", btnX, btnY-1, 10, 2, okId)
 
+	if _, err := g.SetCurrentView(okId); err != nil {
+		return err
+	}
+
 	g.SetKeybinding(okId, gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		g.DeleteView(msgId)
 		g.DeleteView(okId)
+		g.DeleteKeybinding(okId, gocui.KeyEnter, gocui.ModNone)
+		g.DeleteKeybinding(msgId, gocui.KeyEsc, gocui.ModNone)
+		g.DeleteKeybinding(okId, gocui.KeyEsc, gocui.ModNone)
+		if _, err := g.View("inventory"); err == nil {
+			g.SetCurrentView("inventory")
+		}
 		return nil
 	})
 	g.SetKeybinding(msgId, gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		g.DeleteView(msgId)
 		g.DeleteView(okId)
+		g.DeleteKeybinding(okId, gocui.KeyEnter, gocui.ModNone)
+		g.DeleteKeybinding(msgId, gocui.KeyEsc, gocui.ModNone)
+		g.DeleteKeybinding(okId, gocui.KeyEsc, gocui.ModNone)
+		if _, err := g.View("inventory"); err == nil {
+			g.SetCurrentView("inventory")
+		}
+		return nil
+	})
+	g.SetKeybinding(okId, gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		g.DeleteView(msgId)
+		g.DeleteView(okId)
+		g.DeleteKeybinding(okId, gocui.KeyEnter, gocui.ModNone)
+		g.DeleteKeybinding(msgId, gocui.KeyEsc, gocui.ModNone)
+		g.DeleteKeybinding(okId, gocui.KeyEsc, gocui.ModNone)
+		if _, err := g.View("inventory"); err == nil {
+			g.SetCurrentView("inventory")
+		}
 		return nil
 	})
 	return nil

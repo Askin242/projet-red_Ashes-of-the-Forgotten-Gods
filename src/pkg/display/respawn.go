@@ -26,7 +26,7 @@ func respawnPlayer(player *structures.Player) {
 	player.Entity.HP = player.Entity.MaxHP / 2
 	player.Entity.Alive = true
 
-	player.Inventory = structures.Inventory{}
+	//player.Inventory = structures.Inventory{}
 
 	player.Weapon = structures.AllWeapons["Sword"]
 	player.Entity.Helmet = structures.Armors{

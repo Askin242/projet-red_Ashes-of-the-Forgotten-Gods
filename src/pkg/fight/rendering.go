@@ -42,8 +42,15 @@ func RenderFight(player *structures.Player, mob *structures.Enemy, playerPlaying
 		lines = append(lines, fmt.Sprintf("+%s+", strings.Repeat("-", boxWidth-2)))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, name))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Health: %d/%d", hp, maxHP)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, ""))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Level: %d", level)))
+		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, "")) // Empty line to match player's mana line
+
+		var levelIndicator string
+		if level > 0 {
+			levelIndicator = fmt.Sprintf("Depth Lv.%d", level)
+		} else {
+			levelIndicator = "Surface"
+		}
+		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, levelIndicator))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Defense: %d%%", defense)))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Weapon: %s", weapon)))
 		lines = append(lines, fmt.Sprintf("+%s+", strings.Repeat("-", boxWidth-2)))

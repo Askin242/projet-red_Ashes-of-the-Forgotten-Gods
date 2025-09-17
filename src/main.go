@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	ui.InitScreen()
 	ui.GameStartFunc = display.StartGame
 	ui.ShowMainMenu()
 }

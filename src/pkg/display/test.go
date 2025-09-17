@@ -252,10 +252,26 @@ func updateStatusView(v *gocui.View) {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "HP: %d/%d | Gold: %d | Mana: %d | Position: (%d, %d) | Level: %d",
+
+	// Determine difficulty description based on current level
+	var difficultyDesc string
+	switch {
+	case gameState.currentLevel == 0:
+		difficultyDesc = "Easy"
+	case gameState.currentLevel <= 2:
+		difficultyDesc = "Moderate"
+	case gameState.currentLevel <= 5:
+		difficultyDesc = "Hard"
+	case gameState.currentLevel <= 8:
+		difficultyDesc = "Very Hard"
+	default:
+		difficultyDesc = "Extreme"
+	}
+
+	fmt.Fprintf(v, "HP: %d/%d | Gold: %d | Mana: %d | Dungeon Depth: %d (%s)",
 		gameState.player.Entity.HP, gameState.player.Entity.MaxHP, gameState.player.Money,
-		gameState.player.Mana, gameState.playerX, gameState.playerY, gameState.currentLevel)
-	fmt.Fprint(v, "\nZ=Up S=Down Q=Left D=Right F=Use Stairs ESC=Menu | 😊=You 😈=Enemies 👑=Merchant ⚒️=Blacksmith")
+		gameState.player.Mana, gameState.currentLevel, difficultyDesc)
+	fmt.Fprint(v, "\nZ=Up S=Down Q=Left D=Right F=Stairs E=Inventory X=Exit ESC=Menu | 😊=You 😈=Enemies 👑=Merchant ⚒️=Blacksmith")
 }
 
 func moveUp(g *gocui.Gui, v *gocui.View) error {
@@ -276,6 +292,13 @@ func moveRight(g *gocui.Gui, v *gocui.View) error {
 
 func exitGame(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
+}
+
+func openInventory(g *gocui.Gui, v *gocui.View) error {
+	if gameState == nil || gameState.player == nil {
+		return nil
+	}
+	return ui.ShowInventory(g, gameState.player)
 }
 
 func generateMapForLevel(level int, rng *rand.Rand) *gmgmap.Map {
@@ -431,23 +454,71 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 func createRandomEnemy() *structures.Enemy {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	enemyRaces := []string{"Orc", "Skeleton", "Goblin"}
-	enemyNames := map[string][]string{
-		"Orc":      {"Gruk", "Thok", "Morg", "Ugluk"},
-		"Skeleton": {"Bones", "Rattles", "Marrow", "Skull"},
-		"Goblin":   {"Sneaky", "Stabby", "Greedy", "Nasty"},
+	dungeonLevel := gameState.currentLevel
+
+	// Different enemy types appear at different depths
+	var enemyRaces []string
+	var enemyNames map[string][]string
+
+	switch {
+	case dungeonLevel >= 8:
+		// Deep levels: All enemy types, but more dangerous ones are more common
+		enemyRaces = []string{"Skeleton", "Skeleton", "Orc", "Orc", "Goblin"}
+		enemyNames = map[string][]string{
+			"Orc":      {"Gruk the Destroyer", "Thok Bonecrusher", "Morg the Terrible", "Ugluk Deathbringer"},
+			"Skeleton": {"Ancient Bones", "Death's Rattles", "Cursed Marrow", "Lich Skull"},
+			"Goblin":   {"Shadow Sneaky", "Poison Stabby", "Blood Greedy", "Vile Nasty"},
+		}
+	case dungeonLevel >= 5:
+		// Mid-deep levels: Stronger variations
+		enemyRaces = []string{"Orc", "Skeleton", "Goblin", "Orc"}
+		enemyNames = map[string][]string{
+			"Orc":      {"Gruk the Fierce", "Thok Ironjaw", "Morg the Brutal", "Ugluk Warbringer"},
+			"Skeleton": {"Cursed Bones", "Wailing Rattles", "Dark Marrow", "Hollow Skull"},
+			"Goblin":   {"Cunning Sneaky", "Deadly Stabby", "Vicious Greedy", "Cruel Nasty"},
+		}
+	case dungeonLevel >= 2:
+		// Mid levels: Standard enemies with some variety
+		enemyRaces = []string{"Orc", "Skeleton", "Goblin"}
+		enemyNames = map[string][]string{
+			"Orc":      {"Gruk the Bold", "Thok Strongarm", "Morg the Wild", "Ugluk Raider"},
+			"Skeleton": {"Restless Bones", "Clattering Rattles", "Dry Marrow", "Grinning Skull"},
+			"Goblin":   {"Sly Sneaky", "Quick Stabby", "Hungry Greedy", "Mean Nasty"},
+		}
+	default:
+		// Surface and shallow levels: Weaker, more basic enemies
+		enemyRaces = []string{"Goblin", "Goblin", "Orc", "Skeleton"}
+		enemyNames = map[string][]string{
+			"Orc":      {"Gruk", "Thok", "Morg", "Ugluk"},
+			"Skeleton": {"Bones", "Rattles", "Marrow", "Skull"},
+			"Goblin":   {"Sneaky", "Stabby", "Greedy", "Nasty"},
+		}
 	}
 
 	race := enemyRaces[rng.Intn(len(enemyRaces))]
 	names := enemyNames[race]
 	name := names[rng.Intn(len(names))]
 
-	enemy := structures.InitEnemy(name, race)
+	// Use the new scaled enemy initialization based on current dungeon level
+	enemy := structures.InitScaledEnemy(name, race, dungeonLevel)
 
-	enemy.Entity.Level = -gameState.currentLevel + 1
-
-	weapons := []string{"Sword", "Axe", "DoubleAxes", "Spear"}
-	enemy.Weapon = structures.AllWeapons[weapons[rng.Intn(len(weapons))]]
+	// Add level-based prefix to enemy name to indicate difficulty
+	if dungeonLevel > 0 {
+		var prefix string
+		switch {
+		case dungeonLevel >= 10:
+			prefix = "Legendary "
+		case dungeonLevel >= 7:
+			prefix = "Elite "
+		case dungeonLevel >= 5:
+			prefix = "Veteran "
+		case dungeonLevel >= 3:
+			prefix = "Seasoned "
+		case dungeonLevel >= 1:
+			prefix = "Experienced "
+		}
+		enemy.Entity.Name = prefix + enemy.Entity.Name
+	}
 
 	return &enemy
 }
@@ -605,10 +676,16 @@ func setupKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
-	if err := g.SetKeybinding("", 'e', gocui.ModNone, exitGame); err != nil {
+	if err := g.SetKeybinding("", 'e', gocui.ModNone, openInventory); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", 'E', gocui.ModNone, exitGame); err != nil {
+	if err := g.SetKeybinding("", 'E', gocui.ModNone, openInventory); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", 'x', gocui.ModNone, exitGame); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", 'X', gocui.ModNone, exitGame); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, exitGame); err != nil {
@@ -840,10 +917,16 @@ func setupKeybindingsWithPlayer(g *gocui.Gui) error {
 		return err
 	}
 
-	if err := g.SetKeybinding("", 'e', gocui.ModNone, exitGame); err != nil {
+	if err := g.SetKeybinding("", 'e', gocui.ModNone, openInventory); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", 'E', gocui.ModNone, exitGame); err != nil {
+	if err := g.SetKeybinding("", 'E', gocui.ModNone, openInventory); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", 'x', gocui.ModNone, exitGame); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", 'X', gocui.ModNone, exitGame); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, exitGame); err != nil {

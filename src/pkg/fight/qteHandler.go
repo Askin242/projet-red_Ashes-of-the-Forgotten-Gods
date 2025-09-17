@@ -39,7 +39,7 @@ func QuickTimeEvent(speed time.Duration, length int) float64 {
 				fmt.Print("-")
 			}
 		}
-		fmt.Print("  (Press SPACE when 'o' is on 'x' to block! Green zone = good block)")
+		fmt.Print("  (Press SPACE when 'o' is on 'x' for PERFECT block! Green zone = good block)")
 	}
 
 	render()
@@ -75,10 +75,10 @@ func QuickTimeEvent(speed time.Duration, length int) float64 {
 				fmt.Println()
 				if oPos == xPos {
 					fmt.Println("\033[32;1mYou perfectly blocked the attack!\033[0m")
-					return 0.6
+					return 0
 				} else if abs(oPos-xPos) <= 2 {
 					fmt.Println("\033[32mYou did a good block.\033[0m")
-					return 0.85
+					return 0.4
 				} else {
 					fmt.Println("\033[31mYou missed the block.\033[0m")
 					return 1.0

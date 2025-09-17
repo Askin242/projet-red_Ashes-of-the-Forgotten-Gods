@@ -48,7 +48,7 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 	reader := bufio.NewReader(os.Stdin)
 	roundNumber := 0
-	speed := 20 * time.Millisecond
+	speed := 30 * time.Millisecond
 
 	time.Sleep(4 * time.Second)
 	ui.ClearScreen()
@@ -127,7 +127,7 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 			}
 		} else {
 			fmt.Println("\n!!! Incoming attack !!!")
-			fmt.Println("Quick Time Event: Time your block to reduce incoming damage!")
+			fmt.Println("Quick Time Event: Perfect timing blocks 100% damage, good timing blocks 40%!")
 			damageMultiplier := QuickTimeEvent(speed, 20)
 
 			baseDamage := enemy.EnemyRace.BonusDamage + enemy.Weapon.Damage
@@ -135,7 +135,10 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 			rawDamage, actualDamage := enemy.InflictDamage("Melee", &character.Entity, structures.AllSpells["None"], damageMultiplier)
 
-			if blockedDamage > 0 {
+			if damageMultiplier == 0.0 {
+				fmt.Printf("[%s] attacked [%s] but the attack was PERFECTLY BLOCKED! No damage taken!\n",
+					enemy.Entity.Name, character.Entity.Name)
+			} else if blockedDamage > 0 {
 				fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d blocked by timing, %d reduced by armor)!\n",
 					enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, blockedDamage, rawDamage-actualDamage)
 			} else {
