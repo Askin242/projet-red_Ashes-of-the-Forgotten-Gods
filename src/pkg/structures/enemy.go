@@ -17,7 +17,7 @@ func (enm *Enemy) InflictDamage(Action string, attackedEntity *Entity, spellUsed
 }
 
 func InitEnemy(name string, race string) Enemy {
-	return Enemy{
+	enemy := Enemy{
 		Entity: Entity{
 			HP:         100,
 			MaxHP:      100,
@@ -27,11 +27,14 @@ func InitEnemy(name string, race string) Enemy {
 			Helmet:     GetRandomArmorByType("Helmet"),
 			Chestplate: GetRandomArmorByType("Chestplate"),
 			Boots:      GetRandomArmorByType("Boots"),
-			Initiative: 0,
+			Initiative: 10,
 		},
 		Weapon:    AllWeapons["Sword"],
 		EnemyRace: AllEnemyRaces[race],
 	}
+
+	enemy.Entity.Initiative += enemy.EnemyRace.BonusInitiative
+	return enemy
 }
 
 // InitScaledEnemy creates an enemy with stats scaled based on dungeon level

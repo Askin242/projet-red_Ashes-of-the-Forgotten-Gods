@@ -204,7 +204,7 @@ func InitCharacter(username, race string) Player {
 					Type:    "Boots",
 					Defense: 0,
 				},
-				Initiative: 0,
+				Initiative: 10,
 			},
 			Weapon:         AllWeapons["Sword"],
 			Race:           AllRaces[race],
@@ -217,6 +217,7 @@ func InitCharacter(username, race string) Player {
 		mainPlayer.Mana += mainPlayer.Race.BonusMana
 		mainPlayer.MaxHP += mainPlayer.Race.BonusHP
 		mainPlayer.HP = mainPlayer.MaxHP
+		mainPlayer.Entity.Initiative += mainPlayer.Race.BonusInitiative
 
 		for range "123" {
 			mainPlayer.AddItem(GetPotion("Heal", 1, 0))

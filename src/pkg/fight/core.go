@@ -29,10 +29,16 @@ func readLine(reader *bufio.Reader) string {
 }
 
 func getStartingPlayer(player *structures.Player, enemy *structures.Enemy) bool {
-	if player.Entity.Initiative == enemy.Entity.Initiative {
-		return true
-	}
-	return player.Entity.Initiative > enemy.Entity.Initiative
+	playerInitiative := player.Entity.Initiative
+	enemyInitiative := enemy.Entity.Initiative
+
+	playerRoll := structures.GetRNG().Intn(10) + 1
+	enemyRoll := structures.GetRNG().Intn(10) + 1
+
+	playerTotal := playerInitiative + playerRoll
+	enemyTotal := enemyInitiative + enemyRoll
+
+	return playerTotal >= enemyTotal
 }
 
 func StartFight(character *structures.Player, enemy *structures.Enemy) {
