@@ -13,3 +13,12 @@ require (
 	golang.org/x/term v0.35.0
 	golang.org/x/text v0.21.0
 )
+
+require (
+	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482 // indirect
+	github.com/cxong/gomapgen v0.0.0-20250318003246-8d3e2dc57739 // indirect
+	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203 // indirect
+	github.com/fatih/color v1.18.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+)
