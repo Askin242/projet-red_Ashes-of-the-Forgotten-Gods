@@ -48,24 +48,24 @@ func ApplySpellEffect(spell Spell, target *Entity) {
 	}
 }
 
-func (plr *Player) InflictDamage(action string, attackedEntity *Entity, spellUsed Spell, damageMultiplier float64) int {
+func (plr *Player) InflictDamage(action string, attackedEntity *Entity, spellUsed Spell, damageMultiplier float64) (int, int) {
 	switch action {
 	case "Melee":
-		damageOutput := int(float64(plr.Race.BonusDamage+plr.Weapon.Damage) * damageMultiplier)
-		attackedEntity.TakeDamage(damageOutput)
-		return damageOutput
+		rawDamage := int(float64(plr.Race.BonusDamage+plr.Weapon.Damage) * damageMultiplier)
+		actualDamage := attackedEntity.TakeDamage(rawDamage)
+		return rawDamage, actualDamage
 	case "Spell":
 		if spellUsed.Cost <= plr.Mana {
 			plr.Mana -= spellUsed.Cost
-			damageOutput := int(float64(plr.Race.BonusDamage+spellUsed.Damage) * damageMultiplier)
-			attackedEntity.TakeDamage(damageOutput)
+			rawDamage := int(float64(plr.Race.BonusDamage+spellUsed.Damage) * damageMultiplier)
+			actualDamage := attackedEntity.TakeDamage(rawDamage)
 			ApplySpellEffect(spellUsed, attackedEntity)
-			return damageOutput
+			return rawDamage, actualDamage
 		} else {
 			fmt.Println("Not enough mana!")
 		}
 	}
-	return 0
+	return 0, 0
 }
 
 func (plr *Player) LevelUp() int {

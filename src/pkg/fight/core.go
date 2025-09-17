@@ -5,7 +5,6 @@ import (
 	"fmt"
 	structures "main/pkg/structures"
 	ui "main/pkg/ui"
-	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -49,13 +48,23 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 	reader := bufio.NewReader(os.Stdin)
 	roundNumber := 0
-	speed := 150 * time.Millisecond
+	speed := 20 * time.Millisecond
 
 	time.Sleep(4 * time.Second)
-	ui.CallClear()
+	ui.ClearScreen()
 
 	for character.Alive && enemy.Entity.Alive {
 		roundNumber++
+
+		if playerTurn {
+			maxMana := 100 + character.Race.BonusMana
+			if character.Mana < maxMana {
+				character.Mana += 10
+				if character.Mana > maxMana {
+					character.Mana = maxMana
+				}
+			}
+		}
 
 		RenderFight(character, enemy, playerTurn, roundNumber)
 		structures.ProcessEffects(&character.Entity)
@@ -73,12 +82,12 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 				switch mode {
 				case "1":
-					damage := character.InflictDamage("Melee", &enemy.Entity, structures.AllSpells["None"], 1.0)
-					fmt.Printf("[%s] used their weapon dealing %d damage to [%s]!\n",
-						character.Entity.Name, damage, enemy.Entity.Name)
+					rawDamage, actualDamage := character.InflictDamage("Melee", &enemy.Entity, structures.AllSpells["None"], 1.0)
+					fmt.Printf("[%s] used their weapon dealing %d damage (%d before defense) to [%s]!\n",
+						character.Entity.Name, actualDamage, rawDamage, enemy.Entity.Name)
 					chosen = true
 					time.Sleep(2 * time.Second)
-					ui.CallClear()
+					ui.ClearScreen()
 
 				case "2":
 					for i, spell := range character.Spells {
@@ -100,13 +109,12 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 
 					if spellIndex > 0 && spellIndex <= len(character.Spells) {
 						chosenSpell := character.Spells[spellIndex-1]
-						damage := character.InflictDamage("Spell", &enemy.Entity, chosenSpell, 1.0)
-						fmt.Println(damage)
-						fmt.Printf("[%s] used %s dealing %d damage to [%s]!\n",
-							character.Entity.Name, chosenSpell.Name, damage, enemy.Entity.Name)
+						rawDamage, actualDamage := character.InflictDamage("Spell", &enemy.Entity, chosenSpell, 1.0)
+						fmt.Printf("[%s] used %s dealing %d damage (%d before defense) to [%s]!\n",
+							character.Entity.Name, chosenSpell.Name, actualDamage, rawDamage, enemy.Entity.Name)
 						chosen = true
 						time.Sleep(2 * time.Second)
-						ui.CallClear()
+						ui.ClearScreen()
 					} else {
 						fmt.Println("Invalid spell choice.")
 						RenderFight(character, enemy, playerTurn, roundNumber)
@@ -119,10 +127,21 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 			}
 		} else {
 			fmt.Println("\n!!! Incoming attack !!!")
-			damageMultiplier := QuickTimeEvent(speed, 12)
-			damage := enemy.InflictDamage("Melee", &character.Entity, structures.AllSpells["None"], damageMultiplier)
-			fmt.Printf("[%s] attacked [%s] dealing %d damage!\n",
-				enemy.Entity.Name, character.Entity.Name, damage)
+			fmt.Println("Quick Time Event: Time your block to reduce incoming damage!")
+			damageMultiplier := QuickTimeEvent(speed, 20)
+
+			baseDamage := enemy.EnemyRace.BonusDamage + enemy.Weapon.Damage
+			blockedDamage := int(float64(baseDamage) * (1.0 - damageMultiplier))
+
+			rawDamage, actualDamage := enemy.InflictDamage("Melee", &character.Entity, structures.AllSpells["None"], damageMultiplier)
+
+			if blockedDamage > 0 {
+				fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d blocked by timing, %d reduced by armor)!\n",
+					enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, blockedDamage, rawDamage-actualDamage)
+			} else {
+				fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d reduced by armor)!\n",
+					enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, rawDamage-actualDamage)
+			}
 		}
 
 		playerTurn = !playerTurn
@@ -132,9 +151,11 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 		fmt.Printf("\n%s has defeated %s!\n", character.Entity.Name, enemy.Entity.Name)
 		loot := structures.GenerateLootFromEnemy(enemy.EnemyRace)
 		character.AddItem(loot)
-		droppedMoney := rand.Intn(5) + 1
+		droppedMoney := structures.GetRNG().Intn(5) + 1
 		character.Money += droppedMoney
 		fmt.Printf("%s found a %s, aswell as %d coins!\n", character.Entity.Name, loot.GetItem().Name, droppedMoney)
+
+		structures.RefreshSeedState()
 	} else {
 		fmt.Printf("\n%s has been defeated by %s!\n", character.Entity.Name, enemy.Entity.Name)
 	}

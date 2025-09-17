@@ -1,10 +1,5 @@
 package structures
 
-import (
-	"math/rand"
-	"time"
-)
-
 type Item struct {
 	Name   string
 	Id     int
@@ -19,10 +14,8 @@ type InventoryEntry interface {
 
 func (it Item) GetItem() Item { return it }
 
-var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
-
 func newItemID() int {
-	return 1 + rng.Intn(2000000000)
+	return 1 + GetRNG().Intn(2000000000)
 }
 
 func NewItem(name string, weight int, price int, rarity int) Item {
@@ -186,14 +179,16 @@ func GetRandomItemByRarity() InventoryEntry { // Chatgpt based ♥
 		return Heal
 	}
 
-	r := rng.Intn(total)
+	r := GetRNG().Intn(total)
 	cumulative := 0
 	for _, we := range pool {
 		cumulative += we.weight
 		if r < cumulative {
+			RefreshSeedState()
 			return we.entry
 		}
 	}
+	RefreshSeedState()
 	return pool[len(pool)-1].entry
 }
 

@@ -22,24 +22,24 @@ type CraftJob struct {
 	Materials map[string]int
 }
 
-func craftingRulesForWeapon(w Weapon) (minutes int, mats map[string]int) {
+func CraftingRulesForWeapon(w Weapon) (minutes int, mats map[string]int) {
 	rarity := rarityFromWeaponDamage(w.Damage)
 	mats = map[string]int{}
 	switch rarity {
 	case 4:
 		mats["OrcTusk"] = 3
 		mats["SkeletonBone"] = 2
-		return 10, mats
+		return 3, mats
 	case 3:
 		mats["SkeletonBone"] = 2
 		mats["GoblinEar"] = 1
-		return 7, mats
+		return 2, mats
 	case 2:
 		mats["GoblinEar"] = 2
-		return 5, mats
+		return 1, mats
 	default:
 		mats["GoblinEar"] = 1
-		return 3, mats
+		return 1, mats
 	}
 }
 
@@ -76,6 +76,23 @@ type CraftingBlacksmith struct {
 	Current *CraftJob
 }
 
+func InitCraftingBlacksmith() CraftingBlacksmith {
+	return CraftingBlacksmith{
+		BlackSmith: BlackSmith{
+			Entity: Entity{
+				HP:    100,
+				MaxHP: 100,
+				Name:  "Blacksmith",
+				Alive: true,
+				Level: 5,
+			},
+			Inventory:       Inventory{},
+			FirstHealBought: false,
+		},
+		Current: nil,
+	}
+}
+
 func (cb *CraftingBlacksmith) RequestCraftWeapon(player *Player, weaponName string) bool {
 	if cb.Current != nil {
 		return false
@@ -87,7 +104,7 @@ func (cb *CraftingBlacksmith) RequestCraftWeapon(player *Player, weaponName stri
 	if player.Money < 5 {
 		return false
 	}
-	minutes, mats := craftingRulesForWeapon(w)
+	minutes, mats := CraftingRulesForWeapon(w)
 	if !player.HasMaterialsBatch(mats) {
 		return false
 	}
