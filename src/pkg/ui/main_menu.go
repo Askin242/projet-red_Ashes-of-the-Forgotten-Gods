@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"main/pkg/save"
 	"main/pkg/structures"
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -75,7 +73,7 @@ func checkInput(g *gocui.Gui) {
 }
 
 func generateRandomSeed() string {
-	tempRNG := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tempRNG := structures.GetRNG()
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	result := make([]byte, 10)
 	for i := range result {

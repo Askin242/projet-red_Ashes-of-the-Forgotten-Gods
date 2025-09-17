@@ -329,8 +329,8 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	structures := gameState.gameMap.Layer("Structures")
-	currentTile := structures.GetTile(gameState.playerX, gameState.playerY)
+	structuresX := gameState.gameMap.Layer("Structures")
+	currentTile := structuresX.GetTile(gameState.playerX, gameState.playerY)
 
 	if !gmgmap.IsStairs(currentTile) {
 		return nil
@@ -354,8 +354,7 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	if gameState.maps[newLevel] == nil {
-		seed := time.Now().UTC().UnixNano()
-		rng := rand.New(rand.NewSource(seed))
+		rng := structures.GetRNG()
 		gameState.maps[newLevel] = generateMapForLevel(newLevel, rng)
 	}
 
@@ -370,12 +369,12 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 		targetStairs = gmgmap.StairsDown
 	}
 
-	structures = gameState.gameMap.Layer("Structures")
+	structuresX = gameState.gameMap.Layer("Structures")
 	found := false
 
 	for y := 1; y < gameState.gameMap.Height-1 && !found; y++ {
 		for x := 1; x < gameState.gameMap.Width-1 && !found; x++ {
-			if structures.GetTile(x, y) == targetStairs {
+			if structuresX.GetTile(x, y) == targetStairs {
 				for dy := -1; dy <= 1 && !found; dy++ {
 					for dx := -1; dx <= 1 && !found; dx++ {
 						newX, newY := x+dx, y+dy
@@ -431,8 +430,7 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	if !hasEntities {
-		seed := time.Now().UTC().UnixNano()
-		rng := rand.New(rand.NewSource(seed))
+		rng := structures.GetRNG()
 		spawnEntities(gameState.gameMap, rng)
 	}
 
@@ -452,7 +450,7 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 }
 
 func createRandomEnemy() *structures.Enemy {
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rng := structures.GetRNG()
 
 	dungeonLevel := gameState.currentLevel
 
@@ -792,17 +790,18 @@ func startGameLoop(m *gmgmap.Map) {
 func StartGame(username, race, seedStr string) {
 	save.SetSaveID(username)
 
-	var seedVal int64
+	// Initialize the seed system
 	if seedStr != "" {
-		for _, char := range seedStr {
-			seedVal = seedVal*31 + int64(char)
-		}
+		structures.InitializeSeed(seedStr)
 	} else {
-		seedVal = time.Now().UTC().UnixNano()
+		// Generate a random seed if none provided
+		randomSeed := fmt.Sprintf("%d", time.Now().UTC().UnixNano())
+		structures.InitializeSeed(randomSeed)
+		seedStr = randomSeed
 	}
 
 	fmt.Printf("Starting game for %s (%s) with seed %s\n", username, race, seedStr)
-	rng := rand.New(rand.NewSource(seedVal))
+	rng := structures.GetRNG()
 
 	m := generateMapForLevel(0, rng)
 	spawnEntities(m, rng)
@@ -824,9 +823,11 @@ func StartGame(username, race, seedStr string) {
 }
 
 func Display() {
-	seed := time.Now().UTC().UnixNano()
-	fmt.Println("Using seed", seed)
-	rng := rand.New(rand.NewSource(seed))
+	// Initialize with a random seed for display mode
+	randomSeed := fmt.Sprintf("%d", time.Now().UTC().UnixNano())
+	structures.InitializeSeed(randomSeed)
+	fmt.Println("Using seed", randomSeed)
+	rng := structures.GetRNG()
 
 	m := generateMapForLevel(0, rng)
 

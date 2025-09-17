@@ -154,7 +154,7 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 		fmt.Printf("\n%s has defeated %s!\n", character.Entity.Name, enemy.Entity.Name)
 		loot := structures.GenerateLootFromEnemy(enemy.EnemyRace)
 		character.AddItem(loot)
-		droppedMoney := structures.GetRNG().Intn(5) + 1
+		droppedMoney := structures.GetRNG().Intn(30) + 1
 		character.Money += droppedMoney
 		fmt.Printf("%s found a %s, aswell as %d coins!\n", character.Entity.Name, loot.GetItem().Name, droppedMoney)
 
