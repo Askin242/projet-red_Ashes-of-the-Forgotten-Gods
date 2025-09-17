@@ -222,6 +222,21 @@ func InitCharacter(username, race string) Player {
 			mainPlayer.AddItem(GetPotion("Heal", 1, 0))
 		}
 		save.SaveAny("player", mainPlayer)
+	} else {
+		fmt.Printf("Loaded existing character: %s (%s)\n", mainPlayer.Entity.Name, mainPlayer.Race.Name)
+		fmt.Printf("Fixing empty name, setting to: %s\n", username)
+		if mainPlayer.Entity.Name == "" {
+			fmt.Printf("Fixing empty name, setting to: %s\n", username)
+			mainPlayer.Entity.Name = username
+		}
+		if mainPlayer.Race.Name == "" {
+			fmt.Printf("Fixing empty race, setting to: %s\n", race)
+			mainPlayer.Race = AllRaces[race]
+		}
+		if mainPlayer.Weapon.Name == "" {
+			fmt.Printf("Fixing empty weapon, setting to Sword\n")
+			mainPlayer.Weapon = AllWeapons["Sword"]
+		}
 	}
 
 	return mainPlayer

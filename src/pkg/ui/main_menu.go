@@ -13,13 +13,14 @@ import (
 )
 
 var (
-	username string
-	race     string
-	seed     string
-	g        *gocui.Gui
-	hovered  string
-	errMsg   string
-	dialog   bool
+	username      string
+	race          string
+	seed          string
+	g             *gocui.Gui
+	hovered       string
+	errMsg        string
+	dialog        bool
+	GameStartFunc func(string, string, string)
 )
 
 type MenuItem struct {
@@ -31,7 +32,8 @@ var menuItems = []MenuItem{
 	{"[1] New game file", showNewGameForm},
 	{"[2] Load game file", loadGameFile},
 	{"[3] Erase game file", eraseGameFile},
-	{"[4] Exit", quit},
+	{"[4] Start game", startGame},
+	{"[5] Exit", quit},
 }
 
 var selected = 0
@@ -446,11 +448,18 @@ func showLoadSuccess(g *gocui.Gui, config save.GameConfig) error {
 	}
 
 	buttonY := msgY + msgHeight - 2
-	buttonX := msgX + msgWidth - 14
-	createButton(g, "loaded_go_back_button", " Go Back ", buttonX, buttonY-1, 12, 2, "loaded_go_back_button")
+	startBtnX := msgX + msgWidth - 28
+	backBtnX := msgX + msgWidth - 14
+	createButton(g, "loaded_start_button", " Start Game ", startBtnX, buttonY-1, 12, 2, "loaded_start_button")
+	createButton(g, "loaded_go_back_button", " Go Back ", backBtnX, buttonY-1, 12, 2, "loaded_go_back_button")
+
+	g.SetKeybinding("loaded_start_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return startGame(g, v)
+	})
 
 	g.SetKeybinding("loaded_go_back_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		g.DeleteView("loaded")
+		g.DeleteView("loaded_start_button")
 		g.DeleteView("loaded_go_back_button")
 		dialog = false
 		return nil
@@ -655,8 +664,10 @@ func saveForm(g *gocui.Gui) error {
 	}
 
 	buttonY := msgY + msgHeight - 2
-	buttonX := msgX + msgWidth - 14
-	createButton(g, "saved_go_back_button", " Go Back ", buttonX, buttonY-1, 12, 2, "go_back_button")
+	startBtnX := msgX + msgWidth - 28
+	backBtnX := msgX + msgWidth - 14
+	createButton(g, "saved_start_button", " Start Game ", startBtnX, buttonY-1, 12, 2, "saved_start_button")
+	createButton(g, "saved_go_back_button", " Go Back ", backBtnX, buttonY-1, 12, 2, "go_back_button")
 
 	return nil
 }
@@ -665,11 +676,23 @@ func cancelForm(g *gocui.Gui) error {
 	inForm = false
 	dialog = false
 	errMsg = ""
-	views := []string{"form", "username_label", "username", "race_label", "race", "seed_label", "seed", "generate_seed_button", "save_button", "cancel_button", "form_instructions", "error_message", "saved", "saved_go_back_button", "load_dialog", "load_confirm_button", "load_cancel_button", "loaded", "loaded_go_back_button", "erase_dialog", "erase_confirm_button", "erase_cancel_button"}
+	views := []string{"form", "username_label", "username", "race_label", "race", "seed_label", "seed", "generate_seed_button", "save_button", "cancel_button", "form_instructions", "error_message", "saved", "saved_start_button", "saved_go_back_button", "load_dialog", "load_confirm_button", "load_cancel_button", "loaded", "loaded_start_button", "loaded_go_back_button", "erase_dialog", "erase_confirm_button", "erase_cancel_button"}
 	for _, v := range views {
 		g.DeleteView(v)
 	}
 	return nil
+}
+
+func startGame(g *gocui.Gui, v *gocui.View) error {
+	if username == "" || race == "" {
+		return showDialog(g, " Error ", "Please create or load a game first!")
+	}
+
+	if GameStartFunc != nil {
+		g.Close()
+		GameStartFunc(username, race, seed)
+	}
+	return gocui.ErrQuit
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
@@ -734,14 +757,20 @@ func keybindings(g *gocui.Gui) error {
 		return nil
 	})
 
+	g.SetKeybinding("saved_start_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return startGame(g, v)
+	})
+
 	g.SetKeybinding("saved_go_back_button", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		g.DeleteView("saved")
+		g.DeleteView("saved_start_button")
 		g.DeleteView("saved_go_back_button")
 		return cancelForm(g)
 	})
 
 	g.SetKeybinding("saved", gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		g.DeleteView("saved")
+		g.DeleteView("saved_start_button")
 		g.DeleteView("saved_go_back_button")
 		return cancelForm(g)
 	})
@@ -778,7 +807,7 @@ func updateHoverEffects(g *gocui.Gui) {
 		}
 	} else {
 		newHoveredButton := ""
-		buttonNames := []string{"generate_seed_button", "save_button", "cancel_button", "saved_go_back_button", "main_dialog_btn", "load_confirm_button", "load_cancel_button", "loaded_go_back_button", "erase_confirm_button", "erase_cancel_button"}
+		buttonNames := []string{"generate_seed_button", "save_button", "cancel_button", "saved_start_button", "saved_go_back_button", "main_dialog_btn", "load_confirm_button", "load_cancel_button", "loaded_start_button", "loaded_go_back_button", "erase_confirm_button", "erase_cancel_button"}
 
 		for _, btnName := range buttonNames {
 			if isMouseOver(g, btnName, mx, my) {
@@ -846,15 +875,23 @@ func handleMouseClick(g *gocui.Gui, v *gocui.View) error {
 			}, func() { hovered = "" }},
 			{"save_button", func(g *gocui.Gui, v *gocui.View) error { return saveForm(g) }, func() { hovered = "" }},
 			{"cancel_button", func(g *gocui.Gui, v *gocui.View) error { return cancelForm(g) }, func() { hovered = "" }},
+			{"saved_start_button", func(g *gocui.Gui, v *gocui.View) error {
+				return startGame(g, v)
+			}, func() { hovered = "" }},
 			{"saved_go_back_button", func(g *gocui.Gui, v *gocui.View) error {
 				g.DeleteView("saved")
+				g.DeleteView("saved_start_button")
 				g.DeleteView("saved_go_back_button")
 				return cancelForm(g)
 			}, func() { hovered = "" }},
 			{"load_confirm_button", func(g *gocui.Gui, v *gocui.View) error { return confirmLoad(g) }, func() { hovered = "" }},
 			{"load_cancel_button", func(g *gocui.Gui, v *gocui.View) error { return cancelLoad(g) }, func() { hovered = "" }},
+			{"loaded_start_button", func(g *gocui.Gui, v *gocui.View) error {
+				return startGame(g, v)
+			}, func() { hovered = "" }},
 			{"loaded_go_back_button", func(g *gocui.Gui, v *gocui.View) error {
 				g.DeleteView("loaded")
+				g.DeleteView("loaded_start_button")
 				g.DeleteView("loaded_go_back_button")
 				dialog = false
 				return nil
