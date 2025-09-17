@@ -35,6 +35,45 @@ func NewItem(name string, weight int, price int, rarity int) Item {
 	}
 }
 
+type Material struct {
+	Item
+	Key string
+}
+
+func (m Material) GetItem() Item { return m.Item }
+
+func NewMaterial(key string, displayName string) Material {
+	return Material{
+		Item: NewItem(displayName, 0, 0, 0),
+		Key:  key,
+	}
+}
+
+var (
+	GoblinEar    = NewMaterial("GoblinEar", "Goblin Ear")
+	SkeletonBone = NewMaterial("SkeletonBone", "Skeleton Bone")
+	OrcTusk      = NewMaterial("OrcTusk", "Orc Tusk")
+)
+
+var AllMaterials = map[string]Material{
+	"GoblinEar":    GoblinEar,
+	"SkeletonBone": SkeletonBone,
+	"OrcTusk":      OrcTusk,
+}
+
+func GenerateLootFromEnemy(r EnemyRace) InventoryEntry {
+	switch r.Name {
+	case "Goblin":
+		return GoblinEar
+	case "Skeleton":
+		return SkeletonBone
+	case "Orc":
+		return OrcTusk
+	default:
+		return GoblinEar
+	}
+}
+
 type Potion struct {
 	Item
 	Size int

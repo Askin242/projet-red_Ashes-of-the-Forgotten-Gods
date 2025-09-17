@@ -4,7 +4,7 @@ import "encoding/json"
 
 type Inventory []InventoryEntry
 
-func (inv *Inventory) UnmarshalJSON(data []byte) error { // Required for json.Unmarshal to work with Inventory
+func (inv *Inventory) UnmarshalJSON(data []byte) error { // Required for json.Unmarshal to work with Inventory else it does not parse correctly
 	var rawSlice []map[string]any
 	if err := json.Unmarshal(data, &rawSlice); err != nil {
 		return err
@@ -18,6 +18,12 @@ func (inv *Inventory) UnmarshalJSON(data []byte) error { // Required for json.Un
 		}
 
 		switch {
+		case m["Key"] != nil:
+			var mat Material
+			if err := json.Unmarshal(b, &mat); err != nil {
+				return err
+			}
+			entries = append(entries, mat)
 		case m["Spell"] != nil:
 			var sb Spellbooks
 			if err := json.Unmarshal(b, &sb); err != nil {
