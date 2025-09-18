@@ -14,7 +14,7 @@ import (
 
 func ClearScreen() {
 	switch runtime.GOOS {
-	case "linux":
+	case "linux", "darwin":
 		cmd := exec.Command("clear")
 		cmd.Stdout = os.Stdout
 		cmd.Run()
