@@ -121,10 +121,25 @@ var (
 		Item:  NewItem("Fireball Spellbook", 1, 200, 4),
 		Spell: AllSpells["Fireball"],
 	}
+	SpellBookPoisonFlask = Spellbooks{
+		Item:  NewItem("Poison Flask Spellbook", 1, 200, 4),
+		Spell: AllSpells["PoisonFlask"],
+	}
+	SpellBookLightningStrike = Spellbooks{
+		Item:  NewItem("Lightning Strike Spellbook", 1, 200, 4),
+		Spell: AllSpells["LightningStrike"],
+	}
+	SpellBookIceBlast = Spellbooks{
+		Item:  NewItem("Ice Blast Spellbook", 1, 200, 4),
+		Spell: AllSpells["IceBlast"],
+	}
 )
 
 var AllSpellbooks = map[string]Spellbooks{
-	"SpellBookFireball": SpellBookFireball,
+	"SpellBookFireball":        SpellBookFireball,
+	"SpellBookPoisonFlask":     SpellBookPoisonFlask,
+	"SpellBookLightningStrike": SpellBookLightningStrike,
+	"SpellBookIceBlast":        SpellBookIceBlast,
 }
 
 type BackpackItem struct {
