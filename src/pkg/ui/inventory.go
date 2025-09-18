@@ -167,7 +167,21 @@ func useSelectedItem(g *gocui.Gui, v *gocui.View, player *structures.Player) err
 			if player.UsePotion(item) {
 				updateInventoryView(v, player)
 				ShowMessageWithOk(g, "potion", "Item Used",
-					fmt.Sprintf("Used %s! Restored health.", item.Item.Name), 40, 8)
+					fmt.Sprintf("Used %s! Restored health (move to update).", item.Item.Name), 40, 8)
+			}
+		}
+		if item.Type == "Poision" {
+			if player.UsePotion(item) {
+				updateInventoryView(v, player)
+				ShowMessageWithOk(g, "potion", "Item Used",
+					fmt.Sprintf("Used %s! You lost 10HP. Why poising yourself ?", item.Item.Name), 40, 8)
+			}
+		}
+		if item.Type == "Cure" {
+			if player.UsePotion(item) {
+				updateInventoryView(v, player)
+				ShowMessageWithOk(g, "potion", "Item Used",
+					fmt.Sprintf("Used %s! Restored full health (move to update) ?", item.Item.Name), 40, 8)
 			}
 		}
 	case structures.Spellbooks:

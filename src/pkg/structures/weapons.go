@@ -9,22 +9,22 @@ type Weapon struct {
 var (
 	Sword = Weapon{
 		Name:   "Sword",
-		Damage: 10,
+		Damage: 20,
 		Id:     1,
 	}
 	Axe = Weapon{
 		Name:   "Axe",
-		Damage: 13,
+		Damage: 25,
 		Id:     2,
 	}
 	DoubleAxes = Weapon{
 		Name:   "DoubleAxes",
-		Damage: 18,
+		Damage: 33,
 		Id:     3,
 	}
 	Spear = Weapon{
 		Name:   "Spear",
-		Damage: 25,
+		Damage: 50,
 		Id:     4,
 	}
 )

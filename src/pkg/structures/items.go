@@ -189,8 +189,10 @@ func GetRandomItemByRarity() InventoryEntry { // Chatgpt based ♥
 	}
 
 	for _, w := range AllWeapons {
-		wi := NewWeaponItem(w)
-		pool = append(pool, weightedEntry{entry: wi, weight: weightFromRarity(wi.Item.Rarity)})
+		if w.Name != "Sword" { // Default weapon
+			wi := NewWeaponItem(w)
+			pool = append(pool, weightedEntry{entry: wi, weight: weightFromRarity(wi.Item.Rarity)})
+		}
 	}
 
 	for _, a := range AllHelmets {

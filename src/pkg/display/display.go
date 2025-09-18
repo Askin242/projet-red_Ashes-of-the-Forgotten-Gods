@@ -445,7 +445,7 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	if !hasEntities && newLevel == 0 {
+	if !hasEntities {
 		rng := structures.GetRNG()
 		spawnEntities(gameState.gameMap, rng)
 	}
@@ -577,7 +577,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 				fmt.Println("=== GAME OVER ===")
 				fmt.Printf("Your character %s has fallen in battle!\n", gameState.player.Entity.Name)
 				fmt.Println()
-				fmt.Println("You can respawn with 50% health, but you'll lose all your equipment and inventory.")
+				fmt.Println("You can respawn with 50% health, but you'll lose all your equipment.")
 				fmt.Println("Press Enter to respawn or Esc to quit...")
 
 				if handleRespawnChoice() {

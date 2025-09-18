@@ -184,6 +184,13 @@ func (plr *Player) UsePotion(p Potion) bool {
 				if plr.HP > plr.MaxHP {
 					plr.HP = plr.MaxHP
 				}
+			case "Poision":
+				plr.HP -= 10
+				if plr.HP < 1 {
+					plr.HP = 1
+				}
+			case "Cure":
+				plr.HP = plr.MaxHP
 			default:
 			}
 			plr.RemoveItem(entry)
