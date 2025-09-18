@@ -60,7 +60,6 @@ func RenderFight(player *structures.Player, mob *structures.Enemy, playerPlaying
 	playerDefenseRaw := player.Helmet.Defense + player.Chestplate.Defense + player.Boots.Defense + structures.GetSetBonusDefense(player.Entity)
 	mobDefenseRaw := mob.Helmet.Defense + mob.Chestplate.Defense + mob.Boots.Defense + structures.GetSetBonusDefense(mob.Entity)
 
-	// Convert to display percentage (defense * 2, capped at 85%)
 	playerDefensePercent := playerDefenseRaw * 2
 	if playerDefensePercent > 85 {
 		playerDefensePercent = 85

@@ -4,9 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"os"
-	"os/exec"
-	"runtime"
 	"time"
 
 	"main/pkg/fight"
@@ -170,18 +167,6 @@ type GameState struct {
 }
 
 var gameState *GameState
-
-func clearConsole() {
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case "windows":
-		cmd = exec.Command("cmd", "/c", "cls")
-	default:
-		cmd = exec.Command("clear")
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-}
 
 func gameLayout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
@@ -566,12 +551,12 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 			}
 
 			g.Close()
-			clearConsole()
+			ui.ClearScreen()
 
 			fight.StartFight(gameState.player, enemy)
 
 			if !gameState.player.Entity.Alive {
-				clearConsole()
+				ui.ClearScreen()
 				fmt.Println("=== GAME OVER ===")
 				fmt.Printf("Your character %s has fallen in battle!\n", gameState.player.Entity.Name)
 				fmt.Println()
@@ -582,7 +567,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 					respawnPlayer(gameState.player)
 					save.SaveAny("player", gameState.player)
 
-					clearConsole()
+					ui.ClearScreen()
 					fmt.Println("You have been revived! You wake up at the entrance with only the basics...")
 					fmt.Println("Press any key to continue...")
 					fmt.Scanln()
@@ -591,7 +576,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 					gameState.playerX = newX
 					gameState.playerY = newY
 
-					clearConsole()
+					ui.ClearScreen()
 					return restartGameLoop()
 				} else {
 					return nil // Quit the game
@@ -602,13 +587,13 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 			gameState.playerX = newX
 			gameState.playerY = newY
 
-			clearConsole()
+			ui.ClearScreen()
 			return restartGameLoop()
 		}
 
 		if entityTile1 == gmgmap.Merchant || entityTile2 == gmgmap.Merchant {
 			g.Close()
-			clearConsole()
+			ui.ClearScreen()
 
 			merchant := structures.InitMerchant()
 
@@ -616,13 +601,13 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 
 			save.SaveAny("player", gameState.player)
 
-			clearConsole()
+			ui.ClearScreen()
 			return restartGameLoop()
 		}
 
 		if entityTile1 == gmgmap.Blacksmith || entityTile2 == gmgmap.Blacksmith {
 			g.Close()
-			clearConsole()
+			ui.ClearScreen()
 
 			blacksmith := structures.InitCraftingBlacksmith()
 			err := save.LoadAny("blacksmith_job", &blacksmith.Current)
@@ -634,7 +619,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 
 			save.SaveAny("player", gameState.player)
 
-			clearConsole()
+			ui.ClearScreen()
 			return restartGameLoop()
 		}
 
@@ -745,65 +730,6 @@ func restartGameLoop() error {
 	return nil
 }
 
-func startGameLoop(m *gmgmap.Map) {
-	playerX, playerY := findPlayer(m)
-	if playerX == -1 || playerY == -1 {
-		fmt.Println("Error: Player not found on map!")
-		return
-	}
-
-	maps := make(map[int]*gmgmap.Map)
-	maps[0] = m
-
-	player := &structures.Player{
-		Entity: structures.Entity{
-			Name:       "Hero",
-			HP:         100,
-			MaxHP:      100,
-			Alive:      true,
-			Level:      1,
-			Helmet:     structures.GetRandomArmorByType("Helmet"),
-			Chestplate: structures.GetRandomArmorByType("Chestplate"),
-			Boots:      structures.GetRandomArmorByType("Boots"),
-		},
-		Race:           structures.Human,
-		Weapon:         structures.AllWeapons["Sword"],
-		Mana:           50,
-		Money:          100,
-		MaxCarryWeight: 100,
-	}
-
-	gameState = &GameState{
-		gameMap:      m,
-		playerX:      playerX,
-		playerY:      playerY,
-		currentLevel: 0,
-		maps:         maps,
-		player:       player,
-	}
-
-	g, err := gocui.NewGui(gocui.OutputNormal, true)
-	if err != nil {
-		fmt.Printf("Error creating GUI: %v\n", err)
-		return
-	}
-	defer g.Close()
-
-	gameState.gui = g
-
-	g.Cursor = false
-	g.SetManagerFunc(gameLayout)
-
-	if err := setupKeybindings(g); err != nil {
-		fmt.Printf("Error setting up keybindings: %v\n", err)
-		return
-	}
-
-	if err := g.MainLoop(); err != nil && !errors.Is(err, gocui.ErrQuit) {
-		fmt.Printf("Error in main loop: %v\n", err)
-	}
-}
-
 func StartGame(username, race, seedStr string) {
 	save.SetSaveID(username)
 
@@ -837,21 +763,6 @@ func StartGame(username, race, seedStr string) {
 			return // Exit completely
 		}
 	}
-}
-
-func Display() {
-	// Initialize with a random seed for display mode
-	randomSeed := fmt.Sprintf("%d", time.Now().UTC().UnixNano())
-	structures.InitializeSeed(randomSeed)
-	fmt.Println("Using seed", randomSeed)
-	rng := structures.GetRNG()
-
-	m := generateMapForLevel(0, rng)
-
-	spawnEntities(m, rng)
-
-	fmt.Println("Starting game... Use ZQSD to move, F to use stairs, E to quit")
-	startGameLoop(m)
 }
 
 func startGameLoopWithPlayer(m *gmgmap.Map, player *structures.Player) error {

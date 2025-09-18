@@ -30,7 +30,7 @@ func QuickTimeEvent(speed time.Duration, length int) float64 {
 		fmt.Print("\r")
 		for i := 0; i < length; i++ {
 			if i == oPos {
-				fmt.Print("\033[33mo\033[0m")
+				fmt.Print("\033[33mo\033[0m") // Strange char are ansi codes for colors
 			} else if i == xPos {
 				fmt.Print("\033[32;1mx\033[0m")
 			} else if abs(i-xPos) <= 2 {
