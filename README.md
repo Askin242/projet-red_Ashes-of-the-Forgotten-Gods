@@ -4,9 +4,9 @@
     A minimalist action-exploration game project. Clean UI, moody world, pure gameplay.
     <br />
     <br />
-    <a href="issues/new">⚠️ Report Bug</a>
+    <a href="https://github.com/Askin242/projet-red_Ashes-of-the-Forgotten-Gods/issues">⚠️ Report Bug</a>
     ·
-    <a href="issues/new">💡 Request Feature</a>
+    <a href="https://github.com/Askin242/projet-red_Ashes-of-the-Forgotten-Gods/issues">💡 Request Feature</a>
   </p>
   <p align="center">
     <img src="https://img.shields.io/badge/language-Go-00ADD8?style=for-the-badge&labelColor=000000" />
