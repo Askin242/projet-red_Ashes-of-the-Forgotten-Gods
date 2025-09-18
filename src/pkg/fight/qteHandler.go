@@ -2,6 +2,7 @@ package fight
 
 import (
 	"fmt"
+	ui "main/pkg/ui"
 	"os"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 )
 
 func QuickTimeEvent(speed time.Duration, length int) float64 {
+	ui.EnableAnsiColors()
 	if length < 5 {
 		length = 5
 	}

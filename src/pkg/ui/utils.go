@@ -10,7 +10,17 @@ import (
 	"errors"
 
 	"github.com/awesome-gocui/gocui"
+	"golang.org/x/sys/windows"
 )
+
+func enableAnsiColors() {
+	if runtime.GOOS == "windows" {
+		var originalMode uint32
+		stdout := windows.Handle(os.Stdout.Fd())
+		windows.GetConsoleMode(stdout, &originalMode)
+		windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+	}
+}
 
 func setTerminalSize(cols, rows int) {
 	if runtime.GOOS == "windows" {
@@ -36,6 +46,7 @@ func ClearScreen() {
 
 func InitScreen() {
 	setTerminalSize(150, 38)
+	enableAnsiColors()
 	ClearScreen()
 }
 

@@ -13,6 +13,7 @@ type Player struct {
 	Money          int
 	Inventory      Inventory
 	MaxCarryWeight int
+	XP             int
 	Spells         []Spell
 }
 
@@ -74,7 +75,20 @@ func (plr *Player) LevelUp() int {
 	plr.HP += 10
 	plr.Mana += 10
 	plr.Race.BonusDamage += 10
+	plr.XP -= 100
 	return plr.Level
+}
+
+func (plr *Player) GetxpFromMob(mob Entity) int {
+	return mob.Level * mob.defaultXP
+}
+
+func (plr *Player) AddXP(xp int) {
+	plr.XP += xp
+	if plr.XP >= 100 {
+		fmt.Println("Leveled up!")
+		plr.LevelUp()
+	}
 }
 
 func (plr *Player) CurrentCarryWeight() int {

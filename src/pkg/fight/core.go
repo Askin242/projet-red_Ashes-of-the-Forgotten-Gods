@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	structures "main/pkg/structures"
+
 	ui "main/pkg/ui"
 	"os"
 	"strings"
@@ -163,8 +164,8 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 		droppedMoney := structures.GetRNG().Intn(30) + 1
 		character.Money += droppedMoney
 		fmt.Printf("%s found a %s, aswell as %d coins!\n", character.Entity.Name, loot.GetItem().Name, droppedMoney)
-
 		structures.RefreshSeedState()
+		character.AddXP(character.GetxpFromMob(enemy.Entity))
 	} else {
 		fmt.Printf("\n%s has been defeated by %s!\n", character.Entity.Name, enemy.Entity.Name)
 	}
