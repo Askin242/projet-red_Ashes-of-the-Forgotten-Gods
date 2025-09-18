@@ -317,6 +317,36 @@ func openInventory(g *gocui.Gui, v *gocui.View) error {
 	return ui.ShowInventory(g, gameState.player)
 }
 
+func generateBossLevel() *gmgmap.Map {
+	width, height := 150, 40
+	m := gmgmap.NewMap(width, height)
+
+	ground := m.Layer("Ground")
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			ground.SetTile(x, y, gmgmap.Room)
+		}
+	}
+
+	_ = m.Layer("Structures")
+	entities := m.Layer("Entities")
+
+	bossX, bossY := width/2-1, 15
+	if bossX < 0 {
+		bossX = 0
+	}
+	if bossX+1 >= width {
+		bossX = width - 2
+	}
+	if bossY >= height {
+		bossY = height - 1
+	}
+	entities.SetTile(bossX, bossY, gmgmap.Mob)
+	entities.SetTile(bossX+1, bossY, gmgmap.Mob)
+
+	return m
+}
+
 func generateMapForLevel(level int, rng *rand.Rand) *gmgmap.Map {
 	width, height := 150, 40
 	splits := 3
@@ -379,8 +409,12 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	if gameState.maps[newLevel] == nil {
-		rng := structures.GetRNG()
-		gameState.maps[newLevel] = generateMapForLevel(newLevel, rng)
+		if newLevel < 0 && (newLevel%3) == 0 {
+			gameState.maps[newLevel] = generateBossLevel()
+		} else {
+			rng := structures.GetRNG()
+			gameState.maps[newLevel] = generateMapForLevel(newLevel, rng)
+		}
 	}
 
 	gameState.currentLevel = newLevel
@@ -569,7 +603,13 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 		}
 
 		if entityTile1 == gmgmap.Mob || entityTile2 == gmgmap.Mob {
-			enemy := createRandomEnemy()
+			var enemy *structures.Enemy
+			if gameState.currentLevel < 0 && (gameState.currentLevel%3) == 0 {
+				boss := structures.InitBoss("Ash of the Forgotten", "Orc")
+				enemy = &boss
+			} else {
+				enemy = createRandomEnemy()
+			}
 
 			for cx := newX - 1; cx <= newX+2; cx++ {
 				if cx >= 0 && cx < gameState.gameMap.Width {
@@ -622,7 +662,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 					ui.ClearScreen()
 					return restartGameLoop()
 				} else {
-					return nil // Quit the game
+					return nil
 				}
 			}
 
@@ -630,6 +670,74 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 			gameState.playerX = newX
 			gameState.playerY = newY
 			_ = save.SaveWorldState(save.WorldState{CurrentLevel: gameState.currentLevel, PlayerX: gameState.playerX, PlayerY: gameState.playerY})
+
+			if enemy.IsBoss && gameState.player.Entity.Alive {
+				minDist := 10
+				structuresLayer := gameState.gameMap.Layer("Structures")
+				ground := gameState.gameMap.Layer("Ground")
+				entitiesLayer := gameState.gameMap.Layer("Entities")
+				placed := false
+				maxY := gameState.gameMap.Height
+				if maxY > 33 { // Keep within visible area (y <= 32)
+					maxY = 33
+				}
+				for y := 0; y < maxY && !placed; y++ {
+					for x := 0; x < gameState.gameMap.Width-1 && !placed; x++ {
+						dx := x - gameState.playerX
+						if dx < 0 {
+							dx = -dx
+						}
+						dy := y - gameState.playerY
+						if dy < 0 {
+							dy = -dy
+						}
+						if dx+dy < minDist {
+							continue
+						}
+						g1 := ground.GetTile(x, y)
+						g2 := ground.GetTile(x+1, y)
+						e1 := entitiesLayer.GetTile(x, y)
+						e2 := entitiesLayer.GetTile(x+1, y)
+						s1 := structuresLayer.GetTile(x, y)
+						s2 := structuresLayer.GetTile(x+1, y)
+						validGround := (g1 == gmgmap.Room || g1 == gmgmap.Room2 || g1 == gmgmap.Floor) &&
+							(g2 == gmgmap.Room || g2 == gmgmap.Room2 || g2 == gmgmap.Floor)
+						if !validGround {
+							continue
+						}
+						if e1 != gmgmap.Nothing || e2 != gmgmap.Nothing {
+							continue
+						}
+						if s1 != gmgmap.Nothing || s2 != gmgmap.Nothing {
+							continue
+						}
+						structuresLayer.SetTile(x, y, gmgmap.StairsDown)
+						fmt.Printf("Stairs spawned at: (%d, %d)\n", x, y)
+						placed = true
+					}
+				}
+				// Fallback near top center if no position found (should be visible and reachable)
+				if !placed {
+					fx := gameState.gameMap.Width/2 - 1
+					if fx < 0 {
+						fx = 0
+					}
+					fy := 2
+					// Ensure empty and valid ground
+					g1 := ground.GetTile(fx, fy)
+					g2 := ground.GetTile(fx+1, fy)
+					e1 := entitiesLayer.GetTile(fx, fy)
+					e2 := entitiesLayer.GetTile(fx+1, fy)
+					s1 := structuresLayer.GetTile(fx, fy)
+					s2 := structuresLayer.GetTile(fx+1, fy)
+					validGround := (g1 == gmgmap.Room || g1 == gmgmap.Room2 || g1 == gmgmap.Floor) &&
+						(g2 == gmgmap.Room || g2 == gmgmap.Room2 || g2 == gmgmap.Floor)
+					if e1 == gmgmap.Nothing && e2 == gmgmap.Nothing && s1 == gmgmap.Nothing && s2 == gmgmap.Nothing && validGround {
+						structuresLayer.SetTile(fx, fy, gmgmap.StairsDown)
+						fmt.Printf("Stairs spawned at: (%d, %d) [fallback]\n", fx, fy)
+					}
+				}
+			}
 
 			ui.ClearScreen()
 			return restartGameLoop()
