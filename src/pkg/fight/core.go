@@ -42,7 +42,7 @@ func getStartingPlayer(player *structures.Player, enemy *structures.Enemy) bool 
 	return playerTotal >= enemyTotal
 }
 
-func StartFight(character *structures.Player, enemy *structures.Enemy) {
+func StartFight(character *structures.Player, enemy *structures.Enemy) bool {
 	fmt.Printf("%v has come across the malicious %v!\n", character.Entity.Name, enemy.Entity.Name)
 	fmt.Println("Determining who will start...")
 
@@ -169,4 +169,5 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 	} else {
 		fmt.Printf("\n%s has been defeated by %s!\n", character.Entity.Name, enemy.Entity.Name)
 	}
+	return character.Alive
 }

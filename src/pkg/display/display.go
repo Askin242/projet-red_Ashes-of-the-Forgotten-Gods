@@ -569,17 +569,18 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 		if entityTile1 == gmgmap.Mob || entityTile2 == gmgmap.Mob {
 			enemy := createRandomEnemy()
 
-			if entityTile1 == gmgmap.Mob {
-				entities.SetTile(newX, newY, gmgmap.Nothing)
-			}
-			if entityTile2 == gmgmap.Mob && newX+1 < gameState.gameMap.Width {
-				entities.SetTile(newX+1, newY, gmgmap.Nothing)
+			for cx := newX - 1; cx <= newX+2; cx++ {
+				if cx >= 0 && cx < gameState.gameMap.Width {
+					if entities.GetTile(cx, newY) == gmgmap.Mob {
+						entities.SetTile(cx, newY, gmgmap.Nothing)
+					}
+				}
 			}
 
 			g.Close()
 			ui.ClearScreen()
 
-			fight.StartFight(gameState.player, enemy)
+			playerWon := fight.StartFight(gameState.player, enemy)
 
 			if !gameState.player.Entity.Alive {
 				ui.ClearScreen()
@@ -603,6 +604,15 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 						entities.SetTile(newX+1, newY, gmgmap.Nothing)
 					}
 
+					if playerWon {
+						for cx := newX - 1; cx <= newX+2; cx++ {
+							if cx >= 0 && cx < gameState.gameMap.Width {
+								if entities.GetTile(cx, newY) == gmgmap.Mob {
+									entities.SetTile(cx, newY, gmgmap.Nothing)
+								}
+							}
+						}
+					}
 					movePlayer(gameState.gameMap, gameState.playerX, gameState.playerY, newX, newY)
 					gameState.playerX = newX
 					gameState.playerY = newY
