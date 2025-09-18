@@ -10,26 +10,7 @@ import (
 	"errors"
 
 	"github.com/awesome-gocui/gocui"
-	"golang.org/x/sys/windows"
 )
-
-func enableAnsiColors() {
-	if runtime.GOOS == "windows" {
-		var originalMode uint32
-		stdout := windows.Handle(os.Stdout.Fd())
-		windows.GetConsoleMode(stdout, &originalMode)
-		windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-	}
-}
-
-func setTerminalSize(cols, rows int) {
-	if runtime.GOOS == "windows" {
-		cmd := exec.Command("cmd", "/C", fmt.Sprintf("mode con: cols=%d lines=%d", cols, rows))
-		cmd.Run()
-	} else {
-		fmt.Printf("\033[8;%d;%dt", rows, cols)
-	}
-}
 
 func ClearScreen() {
 	switch runtime.GOOS {
