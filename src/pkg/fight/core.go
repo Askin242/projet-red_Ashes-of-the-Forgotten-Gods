@@ -133,24 +133,99 @@ func StartFight(character *structures.Player, enemy *structures.Enemy) {
 				}
 			}
 		} else {
+			action := "Melee"
+			chosenSpell := structures.AllSpells["None"]
+			if enemy.IsBoss {
+				if enemy.Mana < 200 {
+					enemy.Mana += 15
+					if enemy.Mana > 200 {
+						enemy.Mana = 200
+					}
+				}
+				availableSpells := []structures.Spell{}
+				for _, sp := range enemy.Spells {
+					if sp.Cost <= enemy.Mana {
+						availableSpells = append(availableSpells, sp)
+					}
+				}
+				r := structures.GetRNG()
+				if len(availableSpells) > 0 {
+					roll := r.Intn(100)
+					if roll < 50 {
+						action = "Spell"
+						total := 0
+						for _, sp := range availableSpells {
+							total += sp.Damage
+						}
+						pick := r.Intn(total)
+						sacc := 0
+						for _, sp := range availableSpells {
+							sacc += sp.Damage
+							if pick < sacc {
+								chosenSpell = sp
+								break
+							}
+						}
+					} else if roll < 80 {
+						action = "HeavySlam"
+					} else {
+						action = "Melee"
+					}
+				} else {
+					if r.Intn(100) < 60 {
+						action = "HeavySlam"
+					} else {
+						action = "Melee"
+					}
+				}
+			}
+
 			fmt.Println("\n!!! Incoming attack !!!")
 			fmt.Println("Quick Time Event: Perfect timing blocks 100% damage, good timing blocks 40%!")
 			damageMultiplier := QuickTimeEvent(speed, 20)
 
 			baseDamage := enemy.EnemyRace.BonusDamage + enemy.Weapon.Damage
+			if action == "Spell" {
+				baseDamage = enemy.EnemyRace.BonusDamage + chosenSpell.Damage
+			} else if action == "HeavySlam" {
+				baseDamage = int(float64(baseDamage) * 1.8)
+			}
 			blockedDamage := int(float64(baseDamage) * (1.0 - damageMultiplier))
 
-			rawDamage, actualDamage := enemy.InflictDamage("Melee", &character.Entity, structures.AllSpells["None"], damageMultiplier)
+			rawDamage, actualDamage := enemy.InflictDamage(action, &character.Entity, chosenSpell, damageMultiplier)
 
-			if damageMultiplier == 0.0 {
-				fmt.Printf("[%s] attacked [%s] but the attack was PERFECTLY BLOCKED! No damage taken!\n",
-					enemy.Entity.Name, character.Entity.Name)
-			} else if blockedDamage > 0 {
-				fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d blocked by timing, %d reduced by armor)!\n",
-					enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, blockedDamage, rawDamage-actualDamage)
-			} else {
-				fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d reduced by armor)!\n",
-					enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, rawDamage-actualDamage)
+			switch action {
+			case "Spell":
+				if damageMultiplier == 0.0 {
+					fmt.Printf("[%s] cast %s on [%s] but it was PERFECTLY BLOCKED!\n", enemy.Entity.Name, chosenSpell.Name, character.Entity.Name)
+				} else if blockedDamage > 0 {
+					fmt.Printf("[%s] cast %s on [%s] dealing %d damage (%d base damage, %d blocked by timing, %d reduced by armor)!\n",
+						enemy.Entity.Name, chosenSpell.Name, character.Entity.Name, actualDamage, baseDamage, blockedDamage, rawDamage-actualDamage)
+				} else {
+					fmt.Printf("[%s] cast %s on [%s] dealing %d damage (%d base damage, %d reduced by armor)!\n",
+						enemy.Entity.Name, chosenSpell.Name, character.Entity.Name, actualDamage, baseDamage, rawDamage-actualDamage)
+				}
+			case "HeavySlam":
+				if damageMultiplier == 0.0 {
+					fmt.Printf("[%s] used a HEAVY SLAM on [%s] but it was PERFECTLY BLOCKED!\n", enemy.Entity.Name, character.Entity.Name)
+				} else if blockedDamage > 0 {
+					fmt.Printf("[%s] used a HEAVY SLAM on [%s] dealing %d damage (%d base damage, %d blocked by timing, %d reduced by armor)!\n",
+						enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, blockedDamage, rawDamage-actualDamage)
+				} else {
+					fmt.Printf("[%s] used a HEAVY SLAM on [%s] dealing %d damage (%d base damage, %d reduced by armor)!\n",
+						enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, rawDamage-actualDamage)
+				}
+			default:
+				if damageMultiplier == 0.0 {
+					fmt.Printf("[%s] attacked [%s] but the attack was PERFECTLY BLOCKED! No damage taken!\n",
+						enemy.Entity.Name, character.Entity.Name)
+				} else if blockedDamage > 0 {
+					fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d blocked by timing, %d reduced by armor)!\n",
+						enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, blockedDamage, rawDamage-actualDamage)
+				} else {
+					fmt.Printf("[%s] attacked [%s] dealing %d damage (%d base damage, %d reduced by armor)!\n",
+						enemy.Entity.Name, character.Entity.Name, actualDamage, baseDamage, rawDamage-actualDamage)
+				}
 			}
 		}
 

@@ -37,12 +37,16 @@ func RenderFight(player *structures.Player, mob *structures.Enemy, playerPlaying
 		return lines
 	}
 
-	makeEnemyBox := func(name string, hp, maxHP, level, defense int, weapon string) []string {
+	makeEnemyBox := func(name string, hp, maxHP, level, mana, defense int, weapon string) []string {
 		lines := []string{}
 		lines = append(lines, fmt.Sprintf("+%s+", strings.Repeat("-", boxWidth-2)))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, name))
 		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Health: %d/%d", hp, maxHP)))
-		lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, "")) // Empty line to match player's mana line
+		if mana > 0 {
+			lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, fmt.Sprintf("Mana: %d", mana)))
+		} else {
+			lines = append(lines, fmt.Sprintf("| %-*s|", boxWidth-3, ""))
+		}
 
 		var levelIndicator string
 		if level > 0 {
@@ -70,7 +74,7 @@ func RenderFight(player *structures.Player, mob *structures.Enemy, playerPlaying
 	}
 
 	playerBox := makePlayerBox(player.Entity.Name, player.HP, player.MaxHP, player.Level, player.Mana, playerDefensePercent, player.Weapon.Name)
-	mobBox := makeEnemyBox(mob.Entity.Name, mob.HP, mob.MaxHP, mob.Level, mobDefensePercent, mob.Weapon.Name)
+	mobBox := makeEnemyBox(mob.Entity.Name, mob.HP, mob.MaxHP, mob.Level, mob.Mana, mobDefensePercent, mob.Weapon.Name)
 
 	padding := strings.Repeat(" ", leftPadding)
 

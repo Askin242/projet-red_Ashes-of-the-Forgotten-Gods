@@ -6,12 +6,28 @@ type Enemy struct {
 	Entity
 	Weapon
 	EnemyRace
+	IsBoss bool
+	Mana   int
+	Spells []Spell
 }
 
 func (enm *Enemy) InflictDamage(Action string, attackedEntity *Entity, spellUsed Spell, multi float64) (int, int) {
 	switch Action {
 	case "Melee":
 		rawDamage := int(float64(enm.EnemyRace.BonusDamage+enm.Weapon.Damage) * multi)
+		actualDamage := attackedEntity.TakeDamage(rawDamage)
+		return rawDamage, actualDamage
+	case "Spell":
+		if spellUsed.Cost <= enm.Mana {
+			enm.Mana -= spellUsed.Cost
+			rawDamage := int(float64(enm.EnemyRace.BonusDamage+spellUsed.Damage) * multi)
+			actualDamage := attackedEntity.TakeDamage(rawDamage)
+			ApplySpellEffect(spellUsed, attackedEntity)
+			return rawDamage, actualDamage
+		}
+	case "HeavySlam":
+		base := enm.EnemyRace.BonusDamage + enm.Weapon.Damage
+		rawDamage := int(float64(base) * 1.8 * multi)
 		actualDamage := attackedEntity.TakeDamage(rawDamage)
 		return rawDamage, actualDamage
 	}
@@ -34,10 +50,51 @@ func InitEnemy(name string, race string) Enemy {
 		},
 		Weapon:    AllWeapons["Sword"],
 		EnemyRace: AllEnemyRaces[race],
+		IsBoss:    false,
+		Mana:      0,
+		Spells:    []Spell{},
 	}
 
 	enemy.Entity.Initiative += enemy.EnemyRace.BonusInitiative
 	return enemy
+}
+
+func InitBoss(name string, race string) Enemy {
+	boss := Enemy{
+		Entity: Entity{
+			HP:         220,
+			MaxHP:      220,
+			Name:       name,
+			Alive:      true,
+			Level:      5,
+			Helmet:     AllHelmets["SunBreaker"],
+			Chestplate: AllChestplates["SunBreaker"],
+			Boots:      AllBoots["SunBreaker"],
+			Initiative: 99,
+			defaultXP:  rand.Intn(40) + 100,
+		},
+		Weapon:    AllWeapons["Axe"],
+		EnemyRace: AllEnemyRaces[race],
+		IsBoss:    true,
+		Mana:      150,
+	}
+	pool := []Spell{}
+	for _, s := range AllSpells {
+		if s.Name != "None" && s.Name != "HandPunch" {
+			pool = append(pool, s)
+		}
+	}
+	r := GetRNG()
+	for i := range pool {
+		j := r.Intn(i + 1)
+		pool[i], pool[j] = pool[j], pool[i]
+	}
+	if len(pool) > 3 {
+		boss.Spells = pool[:3]
+	} else {
+		boss.Spells = pool
+	}
+	return boss
 }
 
 // InitScaledEnemy creates an enemy with stats scaled based on dungeon level
@@ -46,11 +103,10 @@ func InitScaledEnemy(name string, race string, dungeonLevel int) Enemy {
 
 	// Calculate scaling factor based on dungeon level
 	// Level 0 = 1.0x (base difficulty)
-	// Level 1 = 1.3x
-	// Level 2 = 1.6x
-	// Level 5 = 2.5x
-	// Level 10 = 4.0x
-	scalingFactor := 1.0 + (float64(dungeonLevel) * 0.3)
+	// Level 1 = 1.2x
+	// Level 2 = 1.4x
+	// level 3 is a boss level
+	scalingFactor := 1.0 + (float64(dungeonLevel) * 0.2)
 
 	baseHP := 100 + enemy.EnemyRace.BonusHP
 	scaledHP := int(float64(baseHP) * scalingFactor)
@@ -73,14 +129,11 @@ func InitScaledEnemy(name string, race string, dungeonLevel int) Enemy {
 	// Give higher level enemies better weapons occasionally
 	if dungeonLevel >= 2 {
 		weapons := []string{"Axe", "DoubleAxes", "Spear"}
-		if dungeonLevel >= 5 {
-			//weapons = append(weapons, "Sword") // Add more powerful weapons here
-		}
 		weaponIndex := GetRNG().Intn(len(weapons))
 		selectedWeapon := AllWeapons[weapons[weaponIndex]]
 
 		// Scale weapon damage
-		weaponScaling := 1.0 + (float64(dungeonLevel) * 0.25)
+		weaponScaling := 1.0 + (float64(dungeonLevel) * 0.15)
 		selectedWeapon.Damage = int(float64(selectedWeapon.Damage) * weaponScaling)
 		enemy.Weapon = selectedWeapon
 	}
