@@ -346,9 +346,18 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	structuresX := gameState.gameMap.Layer("Structures")
-	currentTile := structuresX.GetTile(gameState.playerX, gameState.playerY)
+	leftTile := structuresX.GetTile(gameState.playerX, gameState.playerY)
+	rightTile := leftTile
+	if gameState.playerX+1 < gameState.gameMap.Width {
+		rightTile = structuresX.GetTile(gameState.playerX+1, gameState.playerY)
+	}
 
-	if !gmgmap.IsStairs(currentTile) {
+	var currentTile rune
+	if gmgmap.IsStairs(leftTile) {
+		currentTile = leftTile
+	} else if gmgmap.IsStairs(rightTile) {
+		currentTile = rightTile
+	} else {
 		return nil
 	}
 
@@ -641,6 +650,16 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 		gameState.playerX = newX
 		gameState.playerY = newY
 
+		structuresX := gameState.gameMap.Layer("Structures")
+		leftTile := structuresX.GetTile(gameState.playerX, gameState.playerY)
+		rightTile := leftTile
+		if gameState.playerX+1 < gameState.gameMap.Width {
+			rightTile = structuresX.GetTile(gameState.playerX+1, gameState.playerY)
+		}
+		if gmgmap.IsStairs(leftTile) || gmgmap.IsStairs(rightTile) {
+			return useStairs(g, nil)
+		}
+
 		g.Update(func(g *gocui.Gui) error {
 			gameView, _ := g.View("game")
 			statusView, _ := g.View("status")
@@ -680,13 +699,6 @@ func setupKeybindings(g *gocui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding("", 'D', gocui.ModNone, moveRight); err != nil {
-		return err
-	}
-
-	if err := g.SetKeybinding("", 'f', gocui.ModNone, useStairs); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("", 'F', gocui.ModNone, useStairs); err != nil {
 		return err
 	}
 
@@ -874,13 +886,6 @@ func setupKeybindingsWithPlayer(g *gocui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding("", 'D', gocui.ModNone, moveRight); err != nil {
-		return err
-	}
-
-	if err := g.SetKeybinding("", 'f', gocui.ModNone, useStairs); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("", 'F', gocui.ModNone, useStairs); err != nil {
 		return err
 	}
 
