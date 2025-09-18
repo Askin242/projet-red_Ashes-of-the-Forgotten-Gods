@@ -1,0 +1,81 @@
+{
+  "HP": 100,
+  "MaxHP": 100,
+  "Name": "Merchant",
+  "Alive": false,
+  "Level": 0,
+  "Initiative": 0,
+  "Helmet": {
+    "Name": "",
+    "Type": "",
+    "Defense": 0
+  },
+  "Chestplate": {
+    "Name": "",
+    "Type": "",
+    "Defense": 0
+  },
+  "Boots": {
+    "Name": "",
+    "Type": "",
+    "Defense": 0
+  },
+  "Effects": null,
+  "Inventory": [
+    {
+      "Name": "Poison Potion",
+      "Id": 1298498082,
+      "Weight": 1,
+      "Price": 80,
+      "Rarity": 2,
+      "Size": 1,
+      "Type": "Poison"
+    },
+    {
+      "Name": "Poison Potion",
+      "Id": 1298498082,
+      "Weight": 1,
+      "Price": 80,
+      "Rarity": 2,
+      "Size": 1,
+      "Type": "Poison"
+    },
+    {
+      "Name": "Heal Potion",
+      "Id": 1298498082,
+      "Weight": 1,
+      "Price": 50,
+      "Rarity": 1,
+      "Size": 1,
+      "Type": "Heal"
+    },
+    {
+      "Name": "Poison Potion",
+      "Id": 1298498082,
+      "Weight": 1,
+      "Price": 80,
+      "Rarity": 2,
+      "Size": 1,
+      "Type": "Poison"
+    },
+    {
+      "Name": "Heal Potion",
+      "Id": 1298498082,
+      "Weight": 1,
+      "Price": 50,
+      "Rarity": 1,
+      "Size": 1,
+      "Type": "Heal"
+    },
+    {
+      "Name": "Poison Potion",
+      "Id": 1298498082,
+      "Weight": 1,
+      "Price": 80,
+      "Rarity": 2,
+      "Size": 1,
+      "Type": "Poison"
+    }
+  ],
+  "FirstHealBought": true
+}

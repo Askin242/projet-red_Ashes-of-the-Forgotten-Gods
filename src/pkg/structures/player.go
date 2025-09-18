@@ -254,9 +254,6 @@ func InitCharacter(username, race string) Player {
 		mainPlayer.HP = mainPlayer.MaxHP
 		mainPlayer.Entity.Initiative += mainPlayer.Race.BonusInitiative
 
-		for range "123" {
-			mainPlayer.AddItem(GetPotion("Heal", 1, 0))
-		}
 		save.SaveAny("player", mainPlayer)
 	} else {
 		fmt.Printf("Loaded existing character: %s (%s)\n", mainPlayer.Entity.Name, mainPlayer.Race.Name)

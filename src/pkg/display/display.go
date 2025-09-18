@@ -558,7 +558,6 @@ func createRandomEnemy() *structures.Enemy {
 	names := enemyNames[race]
 	name := names[rng.Intn(len(names))]
 
-	// Use the new scaled enemy initialization based on current dungeon level
 	enemy := structures.InitScaledEnemy(name, race, dungeonLevel)
 
 	// Add level-based prefix to enemy name to indicate difficulty
@@ -633,6 +632,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 				fmt.Println("Press Enter to respawn or Esc to quit...")
 
 				if handleRespawnChoice() {
+					gameState.currentLevel = 0
 					respawnPlayer(gameState.player)
 					_ = save.SaveAny("player", gameState.player)
 

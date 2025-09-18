@@ -113,7 +113,16 @@ func InitScaledEnemy(name string, race string, dungeonLevel int) Enemy {
 	enemy.Entity.HP = scaledHP
 	enemy.Entity.MaxHP = scaledHP
 
-	enemy.EnemyRace.BonusDamage = int(float64(enemy.EnemyRace.BonusDamage) * scalingFactor)
+	originalRace := AllEnemyRaces[race]
+	enemy.EnemyRace = EnemyRace{
+		Name:            originalRace.Name,
+		BonusHP:         originalRace.BonusHP,
+		BonusDamage:     int(float64(originalRace.BonusDamage) * scalingFactor),
+		Skill:           originalRace.Skill,
+		BonusMana:       originalRace.BonusMana,
+		BonusInitiative: originalRace.BonusInitiative,
+		Drop:            originalRace.Drop,
+	}
 
 	// Set level for display/identification
 	enemy.Entity.Level = dungeonLevel

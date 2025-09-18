@@ -1,0 +1,86 @@
+{
+  "HP": 100,
+  "MaxHP": 100,
+  "Alive": true,
+  "Level": 0,
+  "Initiative": 15,
+  "Helmet": {
+    "Name": "None",
+    "Type": "Helmet",
+    "Defense": 0
+  },
+  "Chestplate": {
+    "Name": "None",
+    "Type": "Chestplate",
+    "Defense": 0
+  },
+  "Boots": {
+    "Name": "None",
+    "Type": "Boots",
+    "Defense": 0
+  },
+  "Effects": null,
+  "Damage": 20,
+  "Id": 1,
+  "BonusHP": 0,
+  "BonusDamage": 10,
+  "Skill": {
+    "Name": "Hand Punch",
+    "Cost": 20,
+    "Damage": 7,
+    "Element": "Neutral"
+  },
+  "BonusMana": 0,
+  "BonusInitiative": 5,
+  "Mana": 100,
+  "Money": 100,
+  "Inventory": [
+    {
+      "Name": "Heal Potion",
+      "Id": 983314964,
+      "Weight": 1,
+      "Price": 0,
+      "Rarity": 1,
+      "Size": 1,
+      "Type": "Heal"
+    },
+    {
+      "Name": "Heal Potion",
+      "Id": 636254229,
+      "Weight": 1,
+      "Price": 0,
+      "Rarity": 1,
+      "Size": 1,
+      "Type": "Heal"
+    },
+    {
+      "Name": "Heal Potion",
+      "Id": 1338854793,
+      "Weight": 1,
+      "Price": 0,
+      "Rarity": 1,
+      "Size": 1,
+      "Type": "Heal"
+    },
+    {
+      "Name": "Heal Potion",
+      "Id": 1298498082,
+      "Weight": 1,
+      "Price": 0,
+      "Rarity": 1,
+      "Size": 1,
+      "Type": "Heal"
+    }
+  ],
+  "MaxCarryWeight": 10,
+  "XP": 0,
+  "Spells": [
+    {
+      "Name": "Hand Punch",
+      "Cost": 20,
+      "Damage": 7,
+      "Element": "Neutral"
+    }
+  ],
+  "IsFirstLogin": false
+}
