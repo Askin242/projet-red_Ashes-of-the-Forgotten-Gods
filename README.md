@@ -20,75 +20,80 @@
 
 ---
 
-### 🎮 Overview
+<p align="right">
+  🇬🇧 <a href="./README.en.md">English</a> · 🇫🇷 Français
+</p>
 
-Ashes of the Forgotten Gods is a compact indie project focused on exploration and tight action. The experience aims for clarity and immersion with a clean, readable interface and minimal distractions.
+### 🎮 Aperçu
 
-### ✨ Features
+Ashes of the Forgotten Gods est un projet indépendant compact axé sur l'exploration et une action précise. L'expérience vise la clarté et l'immersion avec une interface lisible et sans distractions.
 
-- **Exploration** of a mysterious world
-- **Intuitive UI** and streamlined menus
-- **Action-first loop** focused on discovery and flow
+### ✨ Fonctionnalités
 
-### 🖼️ Screenshots
+- **Exploration** d'un monde mystérieux
+- **Interface intuitive** et menus simplifiés
+- **Boucle d'action** centrée sur la découverte et le flow
 
-In-game:
+### 🖼️ Captures d'écran
 
-![In Game](./game.png)
+En jeu :
 
-### 🧰 Requirements
+![En jeu](./game.png)
 
-- Go (1.21+ recommended)
-- Windows, macOS or Linux
+### 🧰 Prérequis
 
-### 🚀 Getting Started
+- Go (1.21+ recommandé)
+- Windows, macOS ou Linux
 
-1) Clone the repository
+### 🚀 Démarrage rapide
+
+1) Cloner le dépôt
 
 ```bash
 git clone https://github.com/Askin242/projet-red_Ashes-of-the-Forgotten-Gods.git
 cd projet-red_Ashes-of-the-Forgotten-Gods/src
 ```
 
-2) Fetch dependencies and run
+2) Récupérer les dépendances et lancer
 
 ```bash
 go mod tidy
 go run .
 ```
 
-3) Build a binary (optional) (linux)
+3) Construire un binaire (optionnel) (Linux)
 
 ```bash
 go build -o ashes
 ./ashes
 ```
 
-### 🗂️ Project Structure 
+### 🗂️ Structure du projet 
 
-- Root
-  - `README.md` — project overview
-  - `LICENSE` — license file
-  - `main_menu.png`, `game.png` — screenshots
-  - `docs/` — docs and planning (`GdP_RED.xlsx`)
+- Racine
+  - `README.md` — présentation du projet (FR)
+  - `README.en.md` — présentation du projet (EN)
+  - `LICENSE` — licence
+  - `main_menu.png`, `game.png` — captures d'écran
+  - `docs/` — documents et planification (`GdP_RED.xlsx`)
 
 - `src/`
-  - `main.go` — program entrypoint
-  - `go.mod`, `go.sum` — Go module files
+  - `main.go` — point d'entrée du programme
+  - `go.mod`, `go.sum` — fichiers de module Go
   - `pkg/`
-    - `display/` — rendering and screens (`display.go`, `game_menu.go`, `respawn.go`)
-    - `fight/` — combat systems (core, QTE handler, rendering)
-    - `gmgmap/` — map generation utilities and assets 
-    - `save/` — configuration and save system
-    - `structures/` — core game data structures (player, enemies, items, spells…)
-    - `ui/` — UI flows and menus (`main_menu.go`, inventory, merchant, blacksmith, utils)
-  - `saves/` — example save slots and JSON data
+    - `display/` — rendu et écrans (`display.go`, `game_menu.go`, `respawn.go`)
+    - `fight/` — systèmes de combat (noyau, gestion QTE, rendu)
+    - `gmgmap/` — génération de cartes et assets 
+    - `save/` — configuration et système de sauvegarde
+    - `structures/` — structures de données du jeu (joueur, ennemis, objets, sorts…)
+    - `ui/` — flux et menus UI (`main_menu.go`, inventaire, marchand, forgeron, utilitaires)
+  - `saves/` — exemples de sauvegardes et données JSON
 
-### 🙌 Credits
+### 🙌 Crédits
 
-- **Game design & code**: [Sylvestre Graziani](https://github.com/Askin242) & [Matthieu Rey](https://github.com/MathCat975)
-- **Map**: Edited version of  [gmgmap](https://github.com/cxong/gomapgen)
+- **Game design & code** : [Sylvestre Graziani](https://github.com/Askin242) & [Matthieu Rey](https://github.com/MathCat975)
+- **Carte** : Version modifiée de [gmgmap](https://github.com/cxong/gomapgen)
 
-### 📜 License
+### 📜 Licence
 
 MIT
