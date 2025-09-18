@@ -44,6 +44,7 @@ In-game:
 
 - Go (1.21+ recommended)
 - Windows, macOS or Linux
+⚠️ Do not run the game in the `Windows 11 Terminal`, If you are on Windows 11, run the cmd as Administrator (you should not get the title bar with multiple tabs)
 
 ### 🚀 Getting Started
 

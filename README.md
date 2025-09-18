@@ -44,6 +44,7 @@ En jeu :
 
 - Go (1.21+ recommandé)
 - Windows, macOS ou Linux
+⚠️ Ne pas lancé dans un `Terminal Windows 11`, Si vous etes sur Windows 11, lancé le cmd en Administrateur (vous ne devez pas avoir la bar avec les différents onglets)
 
 ### 🚀 Démarrage rapide
 
