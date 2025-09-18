@@ -65,3 +65,16 @@ func LoadAny(fileName string, obj interface{}) error {
 	decoder := json.NewDecoder(jsonFile)
 	return decoder.Decode(obj)
 }
+
+func SaveWorldState(state WorldState) error {
+	return SaveAny("world", state)
+}
+
+func LoadWorldState() (WorldState, error) {
+	var ws WorldState
+	err := LoadAny("world", &ws)
+	if err != nil {
+		return WorldState{}, err
+	}
+	return ws, nil
+}

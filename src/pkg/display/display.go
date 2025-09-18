@@ -459,6 +459,8 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 		spawnEntities(gameState.gameMap, rng)
 	}
 
+	_ = save.SaveWorldState(save.WorldState{CurrentLevel: gameState.currentLevel, PlayerX: gameState.playerX, PlayerY: gameState.playerY})
+
 	g.Update(func(g *gocui.Gui) error {
 		gameView, _ := g.View("game")
 		statusView, _ := g.View("status")
@@ -627,6 +629,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 			movePlayer(gameState.gameMap, gameState.playerX, gameState.playerY, newX, newY)
 			gameState.playerX = newX
 			gameState.playerY = newY
+			_ = save.SaveWorldState(save.WorldState{CurrentLevel: gameState.currentLevel, PlayerX: gameState.playerX, PlayerY: gameState.playerY})
 
 			ui.ClearScreen()
 			return restartGameLoop()
@@ -659,6 +662,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 		movePlayer(gameState.gameMap, gameState.playerX, gameState.playerY, newX, newY)
 		gameState.playerX = newX
 		gameState.playerY = newY
+		_ = save.SaveWorldState(save.WorldState{CurrentLevel: gameState.currentLevel, PlayerX: gameState.playerX, PlayerY: gameState.playerY})
 
 		structuresX := gameState.gameMap.Layer("Structures")
 		leftTile := structuresX.GetTile(gameState.playerX, gameState.playerY)
@@ -842,6 +846,45 @@ func startGameLoopWithPlayer(m *gmgmap.Map, player *structures.Player) error {
 		currentLevel: 0,
 		maps:         maps,
 		player:       player,
+	}
+
+	if ws, err := save.LoadWorldState(); err == nil {
+		if ws.CurrentLevel <= 0 {
+			if gameState.maps[ws.CurrentLevel] == nil {
+				rng := structures.GetRNG()
+				gameState.maps[ws.CurrentLevel] = generateMapForLevel(ws.CurrentLevel, rng)
+			}
+			gameState.currentLevel = ws.CurrentLevel
+			gameState.gameMap = gameState.maps[ws.CurrentLevel]
+			entities := gameState.gameMap.Layer("Entities")
+			for y := 0; y < gameState.gameMap.Height; y++ {
+				for x := 0; x < gameState.gameMap.Width; x++ {
+					if entities.GetTile(x, y) == gmgmap.Player {
+						entities.SetTile(x, y, gmgmap.Nothing)
+					}
+				}
+			}
+			gameState.playerX = ws.PlayerX
+			gameState.playerY = ws.PlayerY
+			if gameState.playerX+1 < gameState.gameMap.Width {
+				entities.SetTile(gameState.playerX, gameState.playerY, gmgmap.Player)
+				entities.SetTile(gameState.playerX+1, gameState.playerY, gmgmap.Player)
+			}
+
+			hasEntities := false
+			for y := 0; y < gameState.gameMap.Height && !hasEntities; y++ {
+				for x := 0; x < gameState.gameMap.Width && !hasEntities; x++ {
+					tile := entities.GetTile(x, y)
+					if tile != gmgmap.Nothing && tile != gmgmap.Player {
+						hasEntities = true
+					}
+				}
+			}
+			if !hasEntities {
+				rng := structures.GetRNG()
+				spawnEntities(gameState.gameMap, rng)
+			}
+		}
 	}
 
 	g, err := gocui.NewGui(gocui.OutputNormal, true)
