@@ -90,6 +90,20 @@ go build -o ashes
     - `ui/` — flux et menus UI (`main_menu.go`, inventaire, marchand, forgeron, utilitaires)
   - `saves/` — exemples de sauvegardes et données JSON
 
+### 🚀 Features
+- Utilisation de la souris dans les menus
+- Combat contre les monstres
+- Systeme de sauvegardes (plusieurs a la fois possible)
+- Combat de bosse au niveau 5
+- Génération aléatoires de niveaux
+- Jeu inifini
+- Systeme de craft (blacksmith)
+- Systeme de marchant (merchant)
+- Systeme de seed, deux mondes avec la meme seed seront identiques
+- 1er combat d'entrainement si 1ere fois sur la sauvegarde
+- Systeme de niveau/XP
+- Systeme d'inventaires
+
 ### 🙌 Crédits
 
 - **Game design & code** : [Sylvestre Graziani](https://github.com/Askin242) & [Matthieu Rey](https://github.com/MathCat975)

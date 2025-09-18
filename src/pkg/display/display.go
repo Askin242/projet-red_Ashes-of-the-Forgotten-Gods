@@ -622,7 +622,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 			g.Close()
 			ui.ClearScreen()
 
-			playerWon := fight.StartFight(gameState.player, enemy)
+			_ = fight.StartFight(gameState.player, enemy)
 
 			if !gameState.player.Entity.Alive {
 				ui.ClearScreen()
@@ -634,35 +634,38 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 
 				if handleRespawnChoice() {
 					respawnPlayer(gameState.player)
-					save.SaveAny("player", gameState.player)
+					_ = save.SaveAny("player", gameState.player)
+
+					rng := structures.GetRNG()
+					freshMap := generateMapForLevel(0, rng)
+					spawnEntities(freshMap, rng)
+
+					gameState.maps = map[int]*gmgmap.Map{0: freshMap}
+					gameState.currentLevel = 0
+					gameState.gameMap = freshMap
+
+					px, py := findPlayer(freshMap)
+					if px == -1 || py == -1 {
+						px, py = 1, 1
+						entities := freshMap.Layer("Entities")
+						entities.SetTile(px, py, gmgmap.Player)
+						if px+1 < freshMap.Width {
+							entities.SetTile(px+1, py, gmgmap.Player)
+						}
+					}
+					gameState.playerX = px
+					gameState.playerY = py
+					_ = save.SaveWorldState(save.WorldState{CurrentLevel: gameState.currentLevel, PlayerX: gameState.playerX, PlayerY: gameState.playerY})
 
 					ui.ClearScreen()
 					fmt.Println("You have been revived! You wake up at the entrance with only the basics...")
-					fmt.Println("Press any key to continue...")
+					fmt.Println("Press Enter to continue...")
 					fmt.Scanln()
-
-					entities.SetTile(newX, newY, gmgmap.Nothing)
-					if newX+1 < gameState.gameMap.Width {
-						entities.SetTile(newX+1, newY, gmgmap.Nothing)
-					}
-
-					if playerWon {
-						for cx := newX - 1; cx <= newX+2; cx++ {
-							if cx >= 0 && cx < gameState.gameMap.Width {
-								if entities.GetTile(cx, newY) == gmgmap.Mob {
-									entities.SetTile(cx, newY, gmgmap.Nothing)
-								}
-							}
-						}
-					}
-					movePlayer(gameState.gameMap, gameState.playerX, gameState.playerY, newX, newY)
-					gameState.playerX = newX
-					gameState.playerY = newY
 
 					ui.ClearScreen()
 					return restartGameLoop()
 				} else {
-					return nil
+					return gocui.ErrQuit
 				}
 			}
 
