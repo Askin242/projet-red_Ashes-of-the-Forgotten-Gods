@@ -86,6 +86,8 @@ func updateInventoryView(v *gocui.View, player *structures.Player) {
 			line = fmt.Sprintf("[Weapon] %s (Damage: %d)", item.Name, e.Weapon.Damage)
 		case structures.ArmorItem:
 			line = fmt.Sprintf("[Armor] %s (Defense: %d)", item.Name, e.Armor.Defense)
+		case structures.BackpackItem:
+			line = fmt.Sprintf("[Backpack] %s (+%d Weight Capacity)", item.Name, e.CapacityIncrease)
 		default:
 			line = fmt.Sprintf("%s (Weight: %d)", item.Name, item.Weight)
 		}
@@ -208,6 +210,14 @@ func useSelectedItem(g *gocui.Gui, v *gocui.View, player *structures.Player) err
 		updateInventoryView(v, player)
 		ShowMessageWithOk(g, "armor", "Armor Equipped",
 			fmt.Sprintf("Equipped %s!", item.Item.Name), 40, 8)
+	case structures.BackpackItem:
+		if player.UseBackpack(item) {
+			ensureValidSelection(player)
+			updateInventoryView(v, player)
+			ShowMessageWithOk(g, "backpack", "Backpack Used",
+				fmt.Sprintf("Used %s! Increased carry capacity by %d (Now %d/%d)!",
+					item.Item.Name, item.CapacityIncrease, player.CurrentCarryWeight(), player.MaxCarryWeight), 50, 8)
+		}
 	default:
 		showInventoryPopup(g, "Item Info",
 			fmt.Sprintf("%s - This item cannot be used directly.", selectedItem.GetItem().Name), player)

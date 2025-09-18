@@ -255,7 +255,6 @@ func updateStatusView(v *gocui.View) {
 
 	v.Clear()
 
-	// Determine difficulty description based on current level
 	var difficultyDesc string
 	switch {
 	case gameState.currentLevel == 0:
@@ -270,9 +269,23 @@ func updateStatusView(v *gocui.View) {
 		difficultyDesc = "Extreme"
 	}
 
-	fmt.Fprintf(v, "HP: %d/%d | Gold: %d | Mana: %d | Dungeon Depth: %d (%s)",
+	xpProgress := gameState.player.XP % 100
+	barLength := 20
+	filledLength := int(float64(xpProgress) / 100.0 * float64(barLength))
+
+	xpBar := "["
+	for i := 0; i < barLength; i++ {
+		if i < filledLength {
+			xpBar += "="
+		} else {
+			xpBar += "-"
+		}
+	}
+	xpBar += "]"
+
+	fmt.Fprintf(v, "HP: %d/%d | Gold: %d | Mana: %d | Level: %d | XP: %s %d/100 | Dungeon: %d (%s)",
 		gameState.player.Entity.HP, gameState.player.Entity.MaxHP, gameState.player.Money,
-		gameState.player.Mana, gameState.currentLevel, difficultyDesc)
+		gameState.player.Mana, gameState.player.Entity.Level, xpBar, xpProgress, gameState.currentLevel, difficultyDesc)
 	fmt.Fprint(v, "\nZ=Up S=Down Q=Left D=Right F=Stairs E=Inventory X=Exit ESC=Menu | 😊=You 😈=Enemies 👑=Merchant ⚒️=Blacksmith")
 }
 
@@ -431,7 +444,7 @@ func useStairs(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	if !hasEntities {
+	if !hasEntities && newLevel == 0 {
 		rng := structures.GetRNG()
 		spawnEntities(gameState.gameMap, rng)
 	}
@@ -523,6 +536,9 @@ func createRandomEnemy() *structures.Enemy {
 	return &enemy
 }
 
+var merchant = structures.InitMerchant()
+var blacksmith = structures.InitCraftingBlacksmith()
+
 func tryMove(g *gocui.Gui, dx, dy int) error {
 	if gameState == nil {
 		return nil
@@ -572,6 +588,11 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 					fmt.Println("Press any key to continue...")
 					fmt.Scanln()
 
+					entities.SetTile(newX, newY, gmgmap.Nothing)
+					if newX+1 < gameState.gameMap.Width {
+						entities.SetTile(newX+1, newY, gmgmap.Nothing)
+					}
+
 					movePlayer(gameState.gameMap, gameState.playerX, gameState.playerY, newX, newY)
 					gameState.playerX = newX
 					gameState.playerY = newY
@@ -595,9 +616,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 			g.Close()
 			ui.ClearScreen()
 
-			merchant := structures.InitMerchant()
-
-			ui.ShowMerchantMenu(&merchant, gameState.player)
+			ui.ShowMerchantMenu(merchant, gameState.player)
 
 			save.SaveAny("player", gameState.player)
 
@@ -609,13 +628,7 @@ func tryMove(g *gocui.Gui, dx, dy int) error {
 			g.Close()
 			ui.ClearScreen()
 
-			blacksmith := structures.InitCraftingBlacksmith()
-			err := save.LoadAny("blacksmith_job", &blacksmith.Current)
-			if err != nil {
-				blacksmith.Current = nil
-			}
-
-			ui.ShowBlacksmithMenu(&blacksmith, gameState.player)
+			ui.ShowBlacksmithMenu(blacksmith, gameState.player)
 
 			save.SaveAny("player", gameState.player)
 

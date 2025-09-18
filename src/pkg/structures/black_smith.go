@@ -1,6 +1,9 @@
 package structures
 
-import "time"
+import (
+	"main/pkg/save"
+	"time"
+)
 
 type BlackSmith struct {
 	Entity
@@ -76,21 +79,27 @@ type CraftingBlacksmith struct {
 	Current *CraftJob
 }
 
-func InitCraftingBlacksmith() CraftingBlacksmith {
-	return CraftingBlacksmith{
-		BlackSmith: BlackSmith{
-			Entity: Entity{
-				HP:    100,
-				MaxHP: 100,
-				Name:  "Blacksmith",
-				Alive: true,
-				Level: 5,
+func InitCraftingBlacksmith() *CraftingBlacksmith {
+	cb := &CraftingBlacksmith{}
+	err := save.LoadAny("blacksmith", cb)
+	if err != nil {
+		*cb = CraftingBlacksmith{
+			BlackSmith: BlackSmith{
+				Entity: Entity{
+					HP:    100,
+					MaxHP: 100,
+					Name:  "Blacksmith",
+					Alive: true,
+					Level: 5,
+				},
+				Inventory:       Inventory{},
+				FirstHealBought: false,
 			},
-			Inventory:       Inventory{},
-			FirstHealBought: false,
-		},
-		Current: nil,
+			Current: nil,
+		}
+		save.SaveAny("blacksmith", cb)
 	}
+	return cb
 }
 
 func (cb *CraftingBlacksmith) RequestCraftWeapon(player *Player, weaponName string) bool {
@@ -120,6 +129,7 @@ func (cb *CraftingBlacksmith) RequestCraftWeapon(player *Player, weaponName stri
 		Materials: mats,
 	}
 	cb.Current = &job
+	save.SaveAny("blacksmith", cb)
 	return true
 }
 
@@ -163,6 +173,7 @@ func (cb *CraftingBlacksmith) RequestCraftArmor(player *Player, armorType, armor
 		Materials: mats,
 	}
 	cb.Current = &job
+	save.SaveAny("blacksmith", cb)
 	return true
 }
 
@@ -178,6 +189,7 @@ func (cb *CraftingBlacksmith) CollectReady(player *Player) int {
 		w := AllWeapons[cb.Current.Request.WeaponName]
 		if player.AddItem(NewWeaponItem(w)) {
 			cb.Current = nil
+			save.SaveAny("blacksmith", cb)
 			return 1
 		}
 	case "armor":
@@ -192,6 +204,7 @@ func (cb *CraftingBlacksmith) CollectReady(player *Player) int {
 		}
 		if player.AddItem(NewArmorItem(a)) {
 			cb.Current = nil
+			save.SaveAny("blacksmith", cb)
 			return 1
 		}
 	}

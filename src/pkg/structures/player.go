@@ -80,7 +80,7 @@ func (plr *Player) LevelUp() int {
 }
 
 func (plr *Player) GetxpFromMob(mob Entity) int {
-	return mob.Level * mob.defaultXP
+	return mob.Level*mob.defaultXP + 10
 }
 
 func (plr *Player) AddXP(xp int) {
@@ -185,6 +185,18 @@ func (plr *Player) UsePotion(p Potion) bool {
 				}
 			default:
 			}
+			plr.RemoveItem(entry)
+			return true
+		}
+	}
+	return false
+}
+
+func (plr *Player) UseBackpack(b BackpackItem) bool {
+	for _, entry := range plr.Inventory {
+		item := entry.GetItem()
+		if item.Id == b.Item.Id {
+			plr.MaxCarryWeight += b.CapacityIncrease
 			plr.RemoveItem(entry)
 			return true
 		}

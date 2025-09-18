@@ -48,6 +48,12 @@ func (inv *Inventory) UnmarshalJSON(data []byte) error { // Required for json.Un
 				return err
 			}
 			entries = append(entries, p)
+		case m["CapacityIncrease"] != nil:
+			var bi BackpackItem
+			if err := json.Unmarshal(b, &bi); err != nil {
+				return err
+			}
+			entries = append(entries, bi)
 		default:
 			var it Item
 			if err := json.Unmarshal(b, &it); err != nil {

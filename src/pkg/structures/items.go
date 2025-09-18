@@ -127,6 +127,39 @@ var AllSpellbooks = map[string]Spellbooks{
 	"SpellBookFireball": SpellBookFireball,
 }
 
+type BackpackItem struct {
+	Item
+	CapacityIncrease int
+}
+
+func (b BackpackItem) GetItem() Item { return b.Item }
+
+var (
+	SmallBackpack = BackpackItem{
+		Item:             NewItem("Small Backpack", 2, 150, 2),
+		CapacityIncrease: 5,
+	}
+	MediumBackpack = BackpackItem{
+		Item:             NewItem("Medium Backpack", 3, 300, 3),
+		CapacityIncrease: 10,
+	}
+	LargeBackpack = BackpackItem{
+		Item:             NewItem("Large Backpack", 4, 500, 4),
+		CapacityIncrease: 15,
+	}
+	GiantBackpack = BackpackItem{
+		Item:             NewItem("Giant Backpack", 5, 800, 5),
+		CapacityIncrease: 25,
+	}
+)
+
+var AllBackpacks = map[string]BackpackItem{
+	"SmallBackpack":  SmallBackpack,
+	"MediumBackpack": MediumBackpack,
+	"LargeBackpack":  LargeBackpack,
+	"GiantBackpack":  GiantBackpack,
+}
+
 func weightFromRarity(rarity int) int {
 	weight := 7 - rarity
 	if weight < 1 {
@@ -171,6 +204,10 @@ func GetRandomItemByRarity() InventoryEntry { // Chatgpt based ♥
 	for _, a := range AllBoots {
 		ai := NewArmorItem(a)
 		pool = append(pool, weightedEntry{entry: ai, weight: weightFromRarity(ai.Item.Rarity)})
+	}
+
+	for _, b := range AllBackpacks {
+		pool = append(pool, weightedEntry{entry: b, weight: weightFromRarity(b.Item.Rarity)})
 	}
 
 	if len(pool) == 0 {

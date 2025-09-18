@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"main/pkg/structures"
 
@@ -58,6 +59,24 @@ func ShowMerchantMenu(merchant *structures.Merchant, player *structures.Player) 
 	merchantSelected = 0
 	g, _ := gocui.NewGui(gocui.OutputNormal, false)
 	defer g.Close()
+
+	stopRefresh := make(chan struct{})
+	defer close(stopRefresh)
+
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				g.Update(func(g *gocui.Gui) error {
+					return nil
+				})
+			case <-stopRefresh:
+				return
+			}
+		}
+	}()
 
 	g.SetManagerFunc(func(g *gocui.Gui) error { return merchantLayout(g, merchant, player) })
 	merchantKeybindings(g, merchant, player)
