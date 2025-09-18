@@ -31,7 +31,8 @@ var menuItems = []MenuItem{
 	{"[2] Load game file", loadGameFile},
 	{"[3] Erase game file", eraseGameFile},
 	{"[4] Start game", startGame},
-	{"[5] Exit", quit},
+	{"[5] Qui sont-ils", showWhoAreThey},
+	{"[6] Exit", quit},
 }
 
 var selected = 0
@@ -266,6 +267,10 @@ func showDialog(g *gocui.Gui, title, message string) error {
 	return ShowSimpleDialog(g, "main", title, message, " Go Back ", 50, 10, func() {
 		dialog = false
 	})
+}
+
+func showWhoAreThey(g *gocui.Gui, v *gocui.View) error {
+	return showDialog(g, " Qui sont-ils ", "Partie2: Abba, Partie3: Steven Spielberg")
 }
 
 var (
