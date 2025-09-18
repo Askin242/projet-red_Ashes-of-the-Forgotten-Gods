@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"main/pkg/fight"
@@ -743,6 +744,24 @@ func restartGameLoop() error {
 	return nil
 }
 
+func ShowNewGameForm(player *structures.Player) {
+	ui.ClearScreen()
+	fmt.Println("It's your first time playing this!")
+	fmt.Println("Would you like to do a training fight? You won't lose any HP or anything; it's just for testing.")
+	fmt.Print("Start training fight now? (y/n): ")
+	var ans string
+	fmt.Scanln(&ans)
+	ans = strings.TrimSpace(strings.ToLower(ans))
+	if len(ans) > 0 && ans[0] == 'y' {
+		ui.ClearScreen()
+		trainingPlayer := *player
+		enemy := structures.InitScaledEnemy("Training Dummy", "Goblin", 0)
+		fight.StartFight(&trainingPlayer, &enemy)
+		fmt.Println("\nTraining finished. Press Enter to continue...")
+		fmt.Scanln()
+	}
+}
+
 func StartGame(username, race, seedStr string) {
 	save.SetSaveID(username)
 
@@ -763,6 +782,12 @@ func StartGame(username, race, seedStr string) {
 	spawnEntities(m, rng)
 
 	player := structures.InitCharacter(username, race)
+
+	if player.IsFirstLogin {
+		ShowNewGameForm(&player)
+		player.IsFirstLogin = false
+		save.SaveAny("player", player)
+	}
 
 	fmt.Println("Starting game... Use ZQSD to move, F to use stairs, ESC for menu")
 	fmt.Println("Walk over merchants/blacksmiths to interact with them")

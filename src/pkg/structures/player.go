@@ -15,6 +15,7 @@ type Player struct {
 	MaxCarryWeight int
 	XP             int
 	Spells         []Spell
+	IsFirstLogin   bool
 }
 
 func ApplySpellEffect(spell Spell, target *Entity) {
@@ -239,6 +240,7 @@ func InitCharacter(username, race string) Player {
 			Inventory:      Inventory{},
 			MaxCarryWeight: 10,
 			Spells:         []Spell{AllSpells["HandPunch"]},
+			IsFirstLogin:   true,
 		}
 		mainPlayer.Mana += mainPlayer.Race.BonusMana
 		mainPlayer.MaxHP += mainPlayer.Race.BonusHP
