@@ -33,7 +33,7 @@ Ashes of the Forgotten Gods is a compact indie project focused on exploration an
 - Mouse support in menus
 - Combat against monsters
 - Save system (multiple slots supported)
-- Boss fight at level 5
+- Boss fight every 3 levels
 - Random level generation
 - Endless gameplay
 - Crafting system (blacksmith)
