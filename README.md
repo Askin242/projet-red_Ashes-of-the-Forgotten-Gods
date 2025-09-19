@@ -94,7 +94,7 @@ go build -o ashes
 - Utilisation de la souris dans les menus
 - Combat contre les monstres
 - Systeme de sauvegardes (plusieurs a la fois possible)
-- Combat de bosse au niveau 5
+- Combat de bosse tout les 3 niveaux
 - Génération aléatoires de niveaux
 - Jeu inifini
 - Systeme de craft (blacksmith)
